@@ -95,6 +95,34 @@
   - 从本地 Antigravity 数据库导入 refresh_token
 - 本地模式：自动检测 language_server 进程，获取端口与 CSRF token，调用 `GetUserStatus`。
 
+## 配额查询实现要点（合并自 quota-query）
+
+### 本地模式（Language Server）
+- **端口与 CSRF 获取**：从 `language_server` 进程命令行提取 `--extension_server_port` 与 `--csrf_token`。
+- **HTTPS/HTTP 兼容**：优先用 HTTPS `connectPort`，遇到 `wrong_version_number` 等错误回退到 HTTP `httpPort`。
+- **核心请求**：`POST /exa.language_server_pb.LanguageServerService/GetUserStatus`。
+- **请求头**：
+  - `Connect-Protocol-Version: 1`
+  - `X-Codeium-Csrf-Token: {csrfToken}`
+  - `Content-Type: application/json`
+- **轮询/容错**：默认 60s 轮询；最大重试 3 次，间隔 5s；网络错误标记 `isStale`。
+- **配额计算**：
+  - Prompt 配额：`remainingPercentage = available / monthly * 100`
+  - 模型配额：`remainingPercentage = remainingFraction * 100`
+
+### Cloud Code API 模式
+- **基础地址**：`https://cloudcode-pa.googleapis.com`
+- **接口**：
+  - `POST /v1internal:loadCodeAssist`（项目信息）
+  - `POST /v1internal:fetchAvailableModels`（模型配额）
+  - `GET https://www.googleapis.com/oauth2/v2/userinfo`（用户邮箱）
+- **OAuth**：PKCE 流程 + refresh token 持久化；Access token 提前 5 分钟刷新。
+- **重试策略**：5xx/429 可重试；401 需重新登录。
+
+### 模型过滤与显示名格式化
+- 仅保留 `gemini` / `claude` / `gpt` 模型；Gemini 版本需 >= 3.0。
+- 版本号格式修复：`gemini-3-0-pro` → `Gemini 3.0 Pro`；`claude-3-5-sonnet` → `Claude 3.5 Sonnet`。
+
 ## 多语言策略（中/英）
 - 使用 `Localizable.strings` 管理 UI 文案。
 - 语言切换为 App 内设置，**重启生效**。
