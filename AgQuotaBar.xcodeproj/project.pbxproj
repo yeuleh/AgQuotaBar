@@ -16,6 +16,7 @@
 		B92851362F13AB7E00F499DC /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B928512C2F13AB7E00F499DC /* GeneralSettingsView.swift */; };
 		B92851372F13AB7E00F499DC /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92851232F13AB7E00F499DC /* AppState.swift */; };
 		B92851382F13AB7E00F499DC /* AgQuotaBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92851222F13AB7E00F499DC /* AgQuotaBarApp.swift */; };
+		B9E1A0012F14000000ABCDE /* LocalQuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		B928512B2F13AB7E00F499DC /* AntigravitySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravitySettingsView.swift; sourceTree = "<group>"; };
 		B928512C2F13AB7E00F499DC /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
 		B928512D2F13AB7E00F499DC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalQuotaService.swift; sourceTree = "<group>"; };
 		B9838D102F13AA8D00787A99 /* AgQuotaBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgQuotaBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -96,11 +98,20 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		B9E1A0032F14000000ABCDE /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
 		B9838D072F13AA8D00787A99 = {
 			isa = PBXGroup;
 			children = (
 				B92851242F13AB7E00F499DC /* App */,
 				B92851262F13AB7E00F499DC /* Models */,
+				B9E1A0032F14000000ABCDE /* Services */,
 				B928512F2F13AB7E00F499DC /* UI */,
 				B9838D122F13AA8D00787A99 /* AgQuotaBar */,
 				B9838D112F13AA8D00787A99 /* Products */,
@@ -198,6 +209,7 @@
 				B92851362F13AB7E00F499DC /* GeneralSettingsView.swift in Sources */,
 				B92851372F13AB7E00F499DC /* AppState.swift in Sources */,
 				B92851382F13AB7E00F499DC /* AgQuotaBarApp.swift in Sources */,
+				B9E1A0012F14000000ABCDE /* LocalQuotaService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -330,7 +342,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -361,7 +373,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;

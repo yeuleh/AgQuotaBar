@@ -8,9 +8,13 @@ struct AgQuotaBarApp: App {
         MenuBarExtra {
             MenuDropdown(appState: appState)
         } label: {
-            MenuBarIcon(percentage: appState.selectedDisplayPercentage, isMonochrome: appState.isMonochrome)
+            MenuBarIcon(
+                percentage: appState.selectedDisplayPercentage,
+                isMonochrome: appState.isMonochrome,
+                isStale: appState.isStale
+            )
         }
-        .menuBarExtraStyle(.window)
+        .menuBarExtraStyle(.menu)
 
         Settings {
             SettingsView()
