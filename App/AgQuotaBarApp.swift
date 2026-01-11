@@ -11,7 +11,8 @@ struct AgQuotaBarApp: App {
             MenuBarIcon(
                 percentage: appState.selectedDisplayPercentage,
                 isMonochrome: appState.isMonochrome,
-                isStale: appState.isStale
+                isStale: appState.isStale,
+                showPercentage: appState.showPercentage
             )
         }
         .menuBarExtraStyle(.menu)

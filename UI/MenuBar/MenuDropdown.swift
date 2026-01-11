@@ -5,7 +5,7 @@ struct MenuDropdown: View {
     @ObservedObject var appState: AppState
 
     private var displayModels: ArraySlice<(account: Account, model: QuotaModel)> {
-        appState.displayModels.prefix(7)
+        appState.visibleDisplayModels.prefix(7)
     }
 
     var body: some View {
@@ -22,7 +22,7 @@ struct MenuDropdown: View {
                 ForEach(displayModels, id: \.model.id) { item in
                     let percentageText = item.model.remainingPercentage.map { "\($0)%" } ?? "--"
                     Button {
-                        appState.selectModel(item.model)
+                        appState.selectModel(item.model, accountId: item.account.id)
                     } label: {
                         Label {
                             Text("\(item.model.name)  \(percentageText)")
@@ -51,8 +51,14 @@ struct MenuDropdown: View {
 
             Divider()
 
-            Button("Settings") {
-                appState.openSettingsWindow()
+            if #available(macOS 14, *) {
+                SettingsLink {
+                    Text("Settings")
+                }
+            } else {
+                Button("Settings") {
+                    appState.openSettingsWindow()
+                }
             }
 
             Button("Quit AgQuotaBar") {

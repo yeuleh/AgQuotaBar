@@ -4,19 +4,22 @@ struct MenuBarIcon: View {
     let percentage: Int?
     let isMonochrome: Bool
     let isStale: Bool
+    let showPercentage: Bool
 
     var body: some View {
         HStack(spacing: 4) {
             Image(nsImage: renderRingImage())
-            
-            if let percentage {
-                Text("\(percentage)%")
-                    .font(.system(size: 11, weight: .medium))
-                    .monospacedDigit()
-            } else {
-                Text("--")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+
+            if showPercentage {
+                if let percentage {
+                    Text("\(percentage)%")
+                        .font(.system(size: 11, weight: .medium))
+                        .monospacedDigit()
+                } else {
+                    Text("--")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
