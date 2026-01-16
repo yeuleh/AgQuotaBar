@@ -83,7 +83,9 @@ final class AppState: ObservableObject {
         didSet {
             if oldValue != defaultAccountId {
                 UserDefaults.standard.set(defaultAccountId, forKey: PreferenceKey.defaultAccountId)
-                reorderAccounts()
+                if isReorderingAccounts == false {
+                    reorderAccounts()
+                }
             }
         }
     }
@@ -123,6 +125,7 @@ final class AppState: ObservableObject {
     private let quotaService = LocalQuotaService()
     private var pollingTask: Task<Void, Never>?
     private var isUpdatingLaunchAtLogin = false
+    private var isReorderingAccounts = false
 
     init() {
         let defaults = UserDefaults.standard
@@ -291,6 +294,27 @@ final class AppState: ObservableObject {
         UserDefaults.standard.set(data, forKey: PreferenceKey.accounts)
     }
 
+    private func resolvedDefaultAccountId(from accounts: [StoredAccount]) -> String? {
+        if let defaultAccountId,
+           accounts.contains(where: { $0.id == defaultAccountId }) {
+            return defaultAccountId
+        }
+        if let local = accounts.first(where: { $0.id == "local" }) {
+            return local.id
+        }
+        return accounts.first?.id
+    }
+
+    private func setDefaultAccountId(_ newValue: String?) {
+        guard newValue != defaultAccountId else {
+            return
+        }
+        let wasReordering = isReorderingAccounts
+        isReorderingAccounts = true
+        defaultAccountId = newValue
+        isReorderingAccounts = wasReordering
+    }
+
     private func rebuildAccounts(snapshot: QuotaSnapshot?) {
         var currentAccounts = storedAccounts
         if let snapshot {
@@ -304,6 +328,9 @@ final class AppState: ObservableObject {
         storedAccounts = currentAccounts
         persistStoredAccounts()
 
+        let resolvedDefaultId = resolvedDefaultAccountId(from: currentAccounts)
+        setDefaultAccountId(resolvedDefaultId)
+
         let localModels: [QuotaModel]
         if let snapshot {
             localModels = snapshot.models
@@ -311,10 +338,10 @@ final class AppState: ObservableObject {
             localModels = accounts.first(where: { $0.id == "local" })?.models ?? []
         }
         let modelMap = ["local": localModels]
-        accounts = orderedAccounts(from: currentAccounts, modelMap: modelMap)
+        accounts = orderedAccounts(from: currentAccounts, modelMap: modelMap, defaultAccountId: resolvedDefaultId)
     }
 
-    private func orderedAccounts(from accounts: [StoredAccount], modelMap: [String: [QuotaModel]]) -> [Account] {
+    private func orderedAccounts(from accounts: [StoredAccount], modelMap: [String: [QuotaModel]], defaultAccountId: String?) -> [Account] {
         let sorted = accounts.sorted { lhs, rhs in
             if lhs.id == defaultAccountId {
                 return true
@@ -331,7 +358,12 @@ final class AppState: ObservableObject {
     }
 
     private func reorderAccounts() {
-        accounts = orderedAccounts(from: storedAccounts, modelMap: ["local": accounts.first(where: { $0.id == "local" })?.models ?? []])
+        isReorderingAccounts = true
+        defer { isReorderingAccounts = false }
+        let resolvedDefaultId = resolvedDefaultAccountId(from: storedAccounts)
+        setDefaultAccountId(resolvedDefaultId)
+        let localModels = accounts.first(where: { $0.id == "local" })?.models ?? []
+        accounts = orderedAccounts(from: storedAccounts, modelMap: ["local": localModels], defaultAccountId: resolvedDefaultId)
     }
 
     private func syncLaunchAtLogin() {

@@ -4,8 +4,18 @@ import SwiftUI
 struct MenuDropdown: View {
     @ObservedObject var appState: AppState
 
-    private var displayModels: ArraySlice<(account: Account, model: QuotaModel)> {
-        appState.visibleDisplayModels.prefix(7)
+    private var groupedDisplayModels: [(account: Account, models: [QuotaModel])] {
+        let sliced = appState.visibleDisplayModels.prefix(7)
+        var result: [(account: Account, models: [QuotaModel])] = []
+        for item in sliced {
+            if var last = result.last, last.account.id == item.account.id {
+                last.models.append(item.model)
+                result[result.count - 1] = last
+            } else {
+                result.append((account: item.account, models: [item.model]))
+            }
+        }
+        return result
     }
 
     var body: some View {
@@ -14,21 +24,28 @@ struct MenuDropdown: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            if displayModels.isEmpty {
+            let groups = groupedDisplayModels
+            if groups.isEmpty {
                 Text("No models configured")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(displayModels, id: \.model.id) { item in
-                    let percentageText = item.model.remainingPercentage.map { "\($0)%" } ?? "--"
-                    Button {
-                        appState.selectModel(item.model, accountId: item.account.id)
-                    } label: {
-                        Label {
-                            Text("\(item.model.name)  \(percentageText)")
-                        } icon: {
-                            if appState.selectedModelId == item.model.id {
-                                Image(systemName: "checkmark")
+                ForEach(groups, id: \.account.id) { group in
+                    Text(group.account.email)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    ForEach(group.models, id: \.id) { model in
+                        let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
+                        Button {
+                            appState.selectModel(model, accountId: group.account.id)
+                        } label: {
+                            Label {
+                                Text("\(model.name)  \(percentageText)")
+                            } icon: {
+                                if appState.selectedModelId == model.id {
+                                    Image(systemName: "checkmark")
+                                }
                             }
                         }
                     }
