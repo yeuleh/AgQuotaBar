@@ -1,53 +1,77 @@
 # PROJECT GUIDELINES (AgQuotaBar)
 
 ## OVERVIEW
-- Native macOS menubar app (Swift + SwiftUI + limited AppKit).
-- Focus on menu bar UX, settings window, quota polling, and secure token storage.
+macOS menubar app monitoring Google Antigravity quota. Swift 5.9+ / SwiftUI / limited AppKit.
 
-## STACK
-- Swift 5.9+
-- SwiftUI (primary UI)
-- AppKit (NSStatusItem/NSImage for menubar rendering if needed)
-- Keychain for secrets, UserDefaults for preferences
+## STRUCTURE
+```
+AgQuotaBar/
+├── App/                    # Entry point + AppState (central state management)
+├── UI/
+│   ├── MenuBar/            # MenuBarIcon (ring renderer), MenuDropdown
+│   └── Settings/           # TabView: General, Antigravity, About
+├── Services/               # LocalQuotaService (polls language_server process)
+├── Models/                 # QuotaModel, Account, QuotaSnapshot
+├── AgQuotaBar/             # Xcode template remnants (ContentView unused)
+└── docs/                   # Design docs
+```
 
-## STRUCTURE (EXPECTED)
-- `App/` App entry, AppState, lifecycle
-- `UI/` SwiftUI views (MenuBar, Settings, About)
-- `Services/` Quota providers, polling, OAuth
-- `Models/` Data models and DTOs
-- `Storage/` Keychain + UserDefaults wrappers
+## WHERE TO LOOK
+| Task | Location | Notes |
+|------|----------|-------|
+| App lifecycle, preferences | `App/AppState.swift` | 441 LOC, owns polling + UserDefaults |
+| Menubar icon rendering | `UI/MenuBar/MenuBarIcon.swift` | NSImage + ring drawing |
+| Quota fetching | `Services/LocalQuotaService.swift` | Detects ports via ps/lsof, calls language_server |
+| Data models | `Models/Placeholders.swift` | QuotaModel, Account, QuotaSnapshot |
+| Settings tabs | `UI/Settings/SettingsView.swift` | Routes to General/Antigravity/About |
 
-## CODING CONVENTIONS
-- Prefer SwiftUI first; use AppKit only when SwiftUI is insufficient.
-- No force unwraps (`!`) unless proven safe and localized; avoid globally.
-- Avoid `fatalError` in runtime paths.
-- Use `@MainActor` for UI state, background tasks for networking.
-- Keep providers pure: no UI logic inside service layer.
-- Prefer immutable structs for models; avoid reference types unless needed.
+## CODE MAP (Key Symbols)
+| Symbol | Type | Location | Role |
+|--------|------|----------|------|
+| `AgQuotaBarApp` | struct | App/AgQuotaBarApp.swift | @main entry, MenuBarExtra scene |
+| `AppState` | class | App/AppState.swift | @MainActor, owns accounts/polling/prefs |
+| `LocalQuotaService` | struct | Services/LocalQuotaService.swift | Fetches quota from local language_server |
+| `MenuBarIcon` | struct | UI/MenuBar/MenuBarIcon.swift | Renders percentage ring icon |
+| `MenuDropdown` | struct | UI/MenuBar/MenuDropdown.swift | Model selector + refresh + settings |
+| `QuotaModel` | struct | Models/Placeholders.swift | id, name, remainingPercentage, resetTime |
 
-## NAMING
-- Types: `PascalCase`, methods/vars: `camelCase`.
-- Protocols: `*Providing` or `*Provider`.
-- Files match primary type name.
+## CONVENTIONS
+- **SwiftUI first**; AppKit only for NSStatusItem/NSImage rendering
+- **@MainActor** on AppState; background Tasks for networking
+- **UserDefaults** via `PreferenceKey` enum in AppState (no separate Storage/ yet)
+- **No force unwraps** (`!`) unless proven safe
+- **Immutable structs** for models; class only for AppState
+- File names match primary type
 
-## ERROR HANDLING
-- Always surface actionable errors to UI via state (e.g., `isStale`, `authState`).
-- Use typed errors (enum) for provider failures.
-- Retry only on 5xx/429 or transient network errors.
+## ANTI-PATTERNS (THIS PROJECT)
+- **No `fatalError`** in runtime paths
+- **No `as any`/`@ts-ignore`** equivalents - avoid type erasure
+- **No Keychain yet** - guidelines specify it for OAuth tokens (future work)
+- **ContentView.swift is dead code** - unused SwiftUI template remnant
 
-## SECURITY
-- OAuth tokens MUST be stored in Keychain.
-- Never log access/refresh tokens.
-- Avoid committing secrets or OAuth client secrets to repo.
+## GOTCHAS
+- **Swift version mismatch**: Xcode project has SWIFT_VERSION=5.0, guidelines say 5.9+
+- **Polling logic** embedded in AppState.startPolling() - not in service layer
+- **Port detection** uses ps + lsof to find language_server process ports
+- **CSRF token** required for API calls (extracted from process args)
+- **Model visibility** persisted per-account in hiddenModelIdsByAccount
+- **First launch** auto-opens Settings to Antigravity tab
 
-## UI BEHAVIOR
-- Menubar icon must be crisp at macOS 13+ sizes.
-- Keep menus short; cap model list to 7 items.
-- Settings window is independent; no main window.
+## COMMANDS
+```bash
+# Build (Xcode)
+xcodebuild -project AgQuotaBar.xcodeproj -scheme AgQuotaBar -configuration Debug build
 
-## TESTING
-- Add tests only if a test framework is already present.
-- Prefer unit tests for parsing and model filtering logic.
+# Run (Xcode)
+open AgQuotaBar.xcodeproj  # Then Cmd+R
 
-## COMMON COMMANDS
-- (TBD) Add build/run commands when Xcode project exists.
+# Debug log location
+tail -f /tmp/agquotabar_debug.log
+```
+
+## NOTES
+- No tests, no CI/CD - manual Xcode build/archive
+- No .swiftlint.yml/.swiftformat - conventions are manual
+- MenuBarExtra requires macOS 13+; SettingsLink requires macOS 14+
+- Icon uses isTemplate for monochrome mode compatibility
+- Cap visible models to 7 items in dropdown
