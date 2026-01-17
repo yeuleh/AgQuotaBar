@@ -13,7 +13,13 @@ struct GeneralSettingsView: View {
                         .frame(width: 20)
                     Toggle(L10n.General.launchAtLogin, isOn: $appState.launchAtLogin)
                 }
-                
+            } header: {
+                Label("系统", systemImage: "gearshape")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+            }
+            
+            Section {
                 HStack(spacing: 12) {
                     Image(systemName: "percent")
                         .foregroundStyle(.secondary)
@@ -27,13 +33,7 @@ struct GeneralSettingsView: View {
                         .frame(width: 20)
                     Toggle(L10n.General.monochromeIcon, isOn: $appState.isMonochrome)
                 }
-            } header: {
-                Label(L10n.General.display, systemImage: "display")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-            }
-            
-            Section {
+                
                 HStack(spacing: 12) {
                     Image(systemName: "globe")
                         .foregroundStyle(.secondary)
@@ -56,7 +56,7 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Label(L10n.General.localization, systemImage: "character.bubble")
+                Label("显示", systemImage: "display")
                     .font(.headline)
                     .foregroundStyle(.primary)
             }

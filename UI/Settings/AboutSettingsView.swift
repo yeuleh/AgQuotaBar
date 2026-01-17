@@ -28,7 +28,7 @@ struct AboutSettingsView: View {
             Text(verbatim: "AgQuotaBar")
                 .font(.title.bold())
             
-            Text(L10n.About.version("1.0.0"))
+            Text(L10n.About.version("0.1"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .padding(.top, 2)
@@ -46,18 +46,11 @@ struct AboutSettingsView: View {
                 Divider()
                     .padding(.horizontal, 40)
                 
-                HStack(spacing: 4) {
-                    Text(L10n.About.madeWith)
-                        .foregroundStyle(.tertiary)
-                    Image(systemName: "heart.fill")
-                        .foregroundStyle(.red.opacity(0.7))
-                        .font(.caption)
-                    Text(L10n.About.forDevelopers)
-                        .foregroundStyle(.tertiary)
-                }
-                .font(.caption)
+                Text(verbatim: "Author: Leon Yeu <github@ulenium.com>")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 
-                Text(verbatim: "© 2024 AgQuotaBar")
+                Text(verbatim: "© 2026 ulenium studio")
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
             }
