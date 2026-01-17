@@ -68,6 +68,24 @@ enum AuthState: Equatable {
             return "错误: \(message)"
         }
     }
+    
+    @MainActor
+    var localizedDisplayText: String {
+        switch self {
+        case .notAuthenticated:
+            return L10n.Auth.notAuthenticated
+        case .authenticating:
+            return L10n.Auth.authenticating
+        case .authenticated:
+            return L10n.Auth.authenticated
+        case .tokenExpired:
+            return L10n.Auth.tokenExpired
+        case .refreshing:
+            return L10n.Auth.refreshing
+        case .error(let message):
+            return L10n.Auth.error(message)
+        }
+    }
 }
 
 // MARK: - Token Data
@@ -246,6 +264,26 @@ enum QuotaMode: String, CaseIterable, Identifiable {
             return "通过本地 Antigravity 语言服务器获取配额"
         case .remote:
             return "直接调用 Google API 获取配额，需要登录 Google 账号"
+        }
+    }
+    
+    @MainActor
+    var localizedDisplayName: String {
+        switch self {
+        case .local:
+            return L10n.Antigravity.localMode
+        case .remote:
+            return L10n.Antigravity.remoteMode
+        }
+    }
+    
+    @MainActor
+    var localizedDescription: String {
+        switch self {
+        case .local:
+            return L10n.Antigravity.localModeDesc
+        case .remote:
+            return L10n.Antigravity.remoteModeDesc
         }
     }
 }

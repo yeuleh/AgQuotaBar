@@ -1,0 +1,79 @@
+/* General Settings */
+"settings.general" = "通用";
+"settings.antigravity" = "Antigravity";
+"settings.about" = "关于";
+
+"general.display" = "显示";
+"general.launchAtLogin" = "开机启动";
+"general.showPercentage" = "在菜单栏显示百分比";
+"general.monochromeIcon" = "单色图标";
+"general.localization" = "语言设置";
+"general.language" = "语言";
+"general.languageRestartHint" = "语言更改将立即生效。";
+
+/* About */
+"about.version" = "版本 %@";
+"about.description" = "从 macOS 菜单栏监控 Google Antigravity 配额。";
+"about.madeWith" = "用";
+"about.forDevelopers" = "为开发者打造";
+
+/* Menu Dropdown */
+"menu.models" = "模型";
+"menu.updateInterval" = "刷新间隔";
+"menu.interval30s" = "30秒";
+"menu.interval2m" = "2分钟";
+"menu.interval1h" = "1小时";
+"menu.refreshNow" = "立即刷新";
+"menu.settings" = "设置...";
+"menu.quit" = "退出 AgQuotaBar";
+"menu.noModels" = "暂无模型";
+"menu.notLoggedIn" = "未登录";
+"menu.loginWithGoogle" = "使用 Google 登录";
+"menu.noModelsConfigured" = "未配置模型";
+
+/* Antigravity Settings */
+"antigravity.mode" = "模式";
+"antigravity.quotaFetchMethod" = "配额获取方式";
+"antigravity.localMode" = "本地模式";
+"antigravity.remoteMode" = "远程模式 (Google API)";
+"antigravity.localModeDesc" = "通过本地 Antigravity 语言服务器获取配额";
+"antigravity.remoteModeDesc" = "直接调用 Google API 获取配额，需要登录 Google 账号";
+"antigravity.loggedIn" = "已登录";
+"antigravity.logout" = "登出";
+"antigravity.loginPrompt" = "登录 Google 账号以获取配额信息";
+"antigravity.remoteModeHint" = "远程模式不依赖本地 Antigravity 环境。";
+"antigravity.loggingIn" = "登录中...";
+"antigravity.loginWithGoogle" = "使用 Google 账号登录";
+"antigravity.googleAccount" = "Google 账号";
+"antigravity.addAccount" = "添加账号";
+"antigravity.email" = "邮箱";
+"antigravity.noModels" = "暂无模型";
+"antigravity.modelVisibilityHint" = "开启开关以在菜单栏下拉列表中显示该模型";
+"antigravity.maxModelsReached" = "已达到最大显示数量 (7个)";
+"antigravity.modelQuotaDisplay" = "模型配额与显示";
+"antigravity.noAccounts" = "暂无账号";
+"antigravity.modelVisibility" = "模型可见性";
+"antigravity.setAsDefault" = "设为默认";
+"antigravity.defaultAccount" = "默认账号";
+"antigravity.deleteAccount" = "删除账号";
+"antigravity.accountTier" = "账号级别: %@";
+
+/* Auth State */
+"auth.notAuthenticated" = "未登录";
+"auth.authenticating" = "登录中...";
+"auth.authenticated" = "已登录";
+"auth.tokenExpired" = "登录已过期";
+"auth.refreshing" = "刷新中...";
+"auth.error" = "错误: %@";
+
+/* OAuth Errors */
+"oauth.callbackServerFailed" = "回调服务器启动失败: %@";
+"oauth.authorizationTimeout" = "授权超时，请重试";
+"oauth.invalidState" = "无效的授权状态 (CSRF 保护)";
+"oauth.authorizationDenied" = "授权被拒绝: %@";
+"oauth.tokenExchangeFailed" = "Token 交换失败: %@";
+"oauth.tokenRefreshFailed" = "Token 刷新失败: %@";
+"oauth.noRefreshToken" = "无可用的刷新令牌";
+"oauth.notAuthenticated" = "未登录";
+"oauth.networkError" = "网络错误: %@";
+"oauth.apiError" = "API 错误 (%d): %@";

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MenuDropdown: View {
     @ObservedObject var appState: AppState
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     private var groupedDisplayModels: [(account: Account, models: [QuotaModel])] {
         let sliced = appState.visibleDisplayModels.prefix(7)
@@ -24,7 +25,7 @@ struct MenuDropdown: View {
 
     var body: some View {
         Group {
-            Text("Models")
+            Text(L10n.Menu.models)
                 .font(.caption.bold())
                 .foregroundStyle(.secondary)
 
@@ -36,10 +37,10 @@ struct MenuDropdown: View {
 
             Divider()
 
-            Picker("Update Interval", selection: $appState.pollingInterval) {
-                Text("30s").tag(30.0)
-                Text("2m").tag(120.0)
-                Text("1h").tag(3600.0)
+            Picker(L10n.Menu.updateInterval, selection: $appState.pollingInterval) {
+                Text(L10n.Menu.interval30s).tag(30.0)
+                Text(L10n.Menu.interval2m).tag(120.0)
+                Text(L10n.Menu.interval1h).tag(3600.0)
             }
 
             Button {
@@ -47,7 +48,7 @@ struct MenuDropdown: View {
                     await appState.refreshNow()
                 }
             } label: {
-                Label("Refresh Now", systemImage: "arrow.clockwise")
+                Label(L10n.Menu.refreshNow, systemImage: "arrow.clockwise")
             }
             .keyboardShortcut("r", modifiers: .command)
 
@@ -55,23 +56,24 @@ struct MenuDropdown: View {
 
             if #available(macOS 14, *) {
                 SettingsLink {
-                    Label("Settings...", systemImage: "gearshape")
+                    Label(L10n.Menu.settings, systemImage: "gearshape")
                 }
             } else {
                 Button {
                     appState.openSettingsWindow()
                 } label: {
-                    Label("Settings...", systemImage: "gearshape")
+                    Label(L10n.Menu.settings, systemImage: "gearshape")
                 }
             }
 
             Button {
                 NSApplication.shared.terminate(nil)
             } label: {
-                Label("Quit AgQuotaBar", systemImage: "power")
+                Label(L10n.Menu.quit, systemImage: "power")
             }
             .keyboardShortcut("q", modifiers: .command)
         }
+        .id(l10n.refreshId)
     }
     
     @ViewBuilder
@@ -79,11 +81,11 @@ struct MenuDropdown: View {
         let models = visibleRemoteModelsSliced
         if models.isEmpty {
             if appState.oauthService.isAuthenticated {
-                Text("No models available")
+                Text(L10n.Menu.noModels)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                Text("Not logged in")
+                Text(L10n.Menu.notLoggedIn)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
@@ -92,7 +94,7 @@ struct MenuDropdown: View {
                         _ = await appState.login()
                     }
                 } label: {
-                    Label("Login with Google", systemImage: "person.badge.key")
+                    Label(L10n.Menu.loginWithGoogle, systemImage: "person.badge.key")
                 }
             }
         } else {
@@ -129,7 +131,7 @@ struct MenuDropdown: View {
     private var localModelsSection: some View {
         let groups = groupedDisplayModels
         if groups.isEmpty {
-            Text("No models configured")
+            Text(L10n.Menu.noModelsConfigured)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         } else {

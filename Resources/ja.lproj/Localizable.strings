@@ -1,0 +1,79 @@
+/* General Settings */
+"settings.general" = "一般";
+"settings.antigravity" = "Antigravity";
+"settings.about" = "情報";
+
+"general.display" = "表示";
+"general.launchAtLogin" = "ログイン時に起動";
+"general.showPercentage" = "メニューバーにパーセンテージを表示";
+"general.monochromeIcon" = "モノクロアイコン";
+"general.localization" = "言語設定";
+"general.language" = "言語";
+"general.languageRestartHint" = "言語の変更はすぐに反映されます。";
+
+/* About */
+"about.version" = "バージョン %@";
+"about.description" = "macOS メニューバーから Google Antigravity クォータを監視します。";
+"about.madeWith" = "開発者のために";
+"about.forDevelopers" = "で作成";
+
+/* Menu Dropdown */
+"menu.models" = "モデル";
+"menu.updateInterval" = "更新間隔";
+"menu.interval30s" = "30秒";
+"menu.interval2m" = "2分";
+"menu.interval1h" = "1時間";
+"menu.refreshNow" = "今すぐ更新";
+"menu.settings" = "設定...";
+"menu.quit" = "AgQuotaBar を終了";
+"menu.noModels" = "モデルがありません";
+"menu.notLoggedIn" = "未ログイン";
+"menu.loginWithGoogle" = "Google でログイン";
+"menu.noModelsConfigured" = "モデルが設定されていません";
+
+/* Antigravity Settings */
+"antigravity.mode" = "モード";
+"antigravity.quotaFetchMethod" = "クォータ取得方法";
+"antigravity.localMode" = "ローカルモード";
+"antigravity.remoteMode" = "リモートモード (Google API)";
+"antigravity.localModeDesc" = "ローカルの Antigravity 言語サーバー経由でクォータを取得";
+"antigravity.remoteModeDesc" = "Google API を直接呼び出してクォータを取得、Google アカウントへのログインが必要";
+"antigravity.loggedIn" = "ログイン済み";
+"antigravity.logout" = "ログアウト";
+"antigravity.loginPrompt" = "Google アカウントでログインしてクォータ情報を取得";
+"antigravity.remoteModeHint" = "リモートモードはローカルの Antigravity 環境に依存しません。";
+"antigravity.loggingIn" = "ログイン中...";
+"antigravity.loginWithGoogle" = "Google アカウントでログイン";
+"antigravity.googleAccount" = "Google アカウント";
+"antigravity.addAccount" = "アカウントを追加";
+"antigravity.email" = "メール";
+"antigravity.noModels" = "モデルがありません";
+"antigravity.modelVisibilityHint" = "トグルをオンにするとメニューバーのドロップダウンにモデルが表示されます";
+"antigravity.maxModelsReached" = "最大表示数に達しました (7個)";
+"antigravity.modelQuotaDisplay" = "モデルクォータと表示";
+"antigravity.noAccounts" = "アカウントがありません";
+"antigravity.modelVisibility" = "モデルの表示設定";
+"antigravity.setAsDefault" = "デフォルトに設定";
+"antigravity.defaultAccount" = "デフォルトアカウント";
+"antigravity.deleteAccount" = "アカウントを削除";
+"antigravity.accountTier" = "アカウントレベル: %@";
+
+/* Auth State */
+"auth.notAuthenticated" = "未ログイン";
+"auth.authenticating" = "ログイン中...";
+"auth.authenticated" = "ログイン済み";
+"auth.tokenExpired" = "ログイン期限切れ";
+"auth.refreshing" = "更新中...";
+"auth.error" = "エラー: %@";
+
+/* OAuth Errors */
+"oauth.callbackServerFailed" = "コールバックサーバーの起動に失敗: %@";
+"oauth.authorizationTimeout" = "認証がタイムアウトしました、再試行してください";
+"oauth.invalidState" = "無効な認証状態 (CSRF 保護)";
+"oauth.authorizationDenied" = "認証が拒否されました: %@";
+"oauth.tokenExchangeFailed" = "トークン交換に失敗: %@";
+"oauth.tokenRefreshFailed" = "トークン更新に失敗: %@";
+"oauth.noRefreshToken" = "利用可能なリフレッシュトークンがありません";
+"oauth.notAuthenticated" = "未ログイン";
+"oauth.networkError" = "ネットワークエラー: %@";
+"oauth.apiError" = "API エラー (%d): %@";

@@ -34,21 +34,7 @@ private enum PreferenceKey {
     static let quotaMode = "quotaMode"
 }
 
-enum AppLanguage: String, CaseIterable, Identifiable {
-    case english = "en"
-    case chinese = "zh-Hans"
 
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .english:
-            return "English"
-        case .chinese:
-            return "中文"
-        }
-    }
-}
 
 struct StoredAccount: Identifiable, Codable, Hashable {
     let id: String
@@ -109,6 +95,7 @@ final class AppState: ObservableObject {
         didSet {
             if oldValue != language {
                 UserDefaults.standard.set(language.rawValue, forKey: PreferenceKey.language)
+                LocalizationManager.shared.setLanguage(language)
             }
         }
     }

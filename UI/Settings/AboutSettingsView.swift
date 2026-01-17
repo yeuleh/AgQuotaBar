@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct AboutSettingsView: View {
+    @ObservedObject private var l10n = LocalizationManager.shared
+    
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
@@ -23,15 +25,15 @@ struct AboutSettingsView: View {
             }
             .padding(.bottom, 20)
             
-            Text("AgQuotaBar")
+            Text(verbatim: "AgQuotaBar")
                 .font(.title.bold())
             
-            Text("Version 1.0.0")
+            Text(L10n.About.version("1.0.0"))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .padding(.top, 2)
             
-            Text("Monitor your Google Antigravity quota from the macOS menu bar.")
+            Text(L10n.About.description)
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -45,22 +47,23 @@ struct AboutSettingsView: View {
                     .padding(.horizontal, 40)
                 
                 HStack(spacing: 4) {
-                    Text("Made with")
+                    Text(L10n.About.madeWith)
                         .foregroundStyle(.tertiary)
                     Image(systemName: "heart.fill")
                         .foregroundStyle(.red.opacity(0.7))
                         .font(.caption)
-                    Text("for developers")
+                    Text(L10n.About.forDevelopers)
                         .foregroundStyle(.tertiary)
                 }
                 .font(.caption)
                 
-                Text("© 2024 AgQuotaBar")
+                Text(verbatim: "© 2024 AgQuotaBar")
                     .font(.caption2)
                     .foregroundStyle(.quaternary)
             }
             .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .id(l10n.refreshId)
     }
 }

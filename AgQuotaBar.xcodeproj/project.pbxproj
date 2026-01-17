@@ -22,6 +22,11 @@
 		B9OAUTH052F15000000ABCDE /* OAuthCallbackServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH062F15000000ABCDE /* OAuthCallbackServer.swift */; };
 		B9OAUTH072F15000000ABCDE /* OAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH082F15000000ABCDE /* OAuthService.swift */; };
 		B9OAUTH092F15000000ABCDE /* RemoteQuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH0A2F15000000ABCDE /* RemoteQuotaService.swift */; };
+		B9L10N012F17000000ABCDE /* LocalizationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9L10N022F17000000ABCDE /* LocalizationManager.swift */; };
+		B9L10N032F17000000ABCDE /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9L10N042F17000000ABCDE /* L10n.swift */; };
+		B9RES0052F17000000ABCDE /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = B9RES0012F17000000ABCDE /* en.lproj */; };
+		B9RES0062F17000000ABCDE /* zh-Hans.lproj in Resources */ = {isa = PBXBuildFile; fileRef = B9RES0022F17000000ABCDE /* zh-Hans.lproj */; };
+		B9RES0072F17000000ABCDE /* ja.lproj in Resources */ = {isa = PBXBuildFile; fileRef = B9RES0032F17000000ABCDE /* ja.lproj */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +45,11 @@
 		B9OAUTH062F15000000ABCDE /* OAuthCallbackServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthCallbackServer.swift; sourceTree = "<group>"; };
 		B9OAUTH082F15000000ABCDE /* OAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthService.swift; sourceTree = "<group>"; };
 		B9OAUTH0A2F15000000ABCDE /* RemoteQuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteQuotaService.swift; sourceTree = "<group>"; };
+		B9L10N022F17000000ABCDE /* LocalizationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationManager.swift; sourceTree = "<group>"; };
+		B9L10N042F17000000ABCDE /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
+		B9RES0012F17000000ABCDE /* en.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; path = en.lproj; sourceTree = "<group>"; };
+		B9RES0022F17000000ABCDE /* zh-Hans.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "zh-Hans.lproj"; sourceTree = "<group>"; };
+		B9RES0032F17000000ABCDE /* ja.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ja.lproj; sourceTree = "<group>"; };
 		B9838D102F13AA8D00787A99 /* AgQuotaBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgQuotaBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -67,6 +77,8 @@
 			children = (
 				B92851222F13AB7E00F499DC /* AgQuotaBarApp.swift */,
 				B92851232F13AB7E00F499DC /* AppState.swift */,
+				B9L10N022F17000000ABCDE /* LocalizationManager.swift */,
+				B9L10N042F17000000ABCDE /* L10n.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -121,6 +133,16 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		B9RES0042F17000000ABCDE /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B9RES0012F17000000ABCDE /* en.lproj */,
+				B9RES0022F17000000ABCDE /* zh-Hans.lproj */,
+				B9RES0032F17000000ABCDE /* ja.lproj */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		B9838D072F13AA8D00787A99 = {
 			isa = PBXGroup;
 			children = (
@@ -128,6 +150,7 @@
 				B92851262F13AB7E00F499DC /* Models */,
 				B9E1A0032F14000000ABCDE /* Services */,
 				B928512F2F13AB7E00F499DC /* UI */,
+				B9RES0042F17000000ABCDE /* Resources */,
 				B9838D122F13AA8D00787A99 /* AgQuotaBar */,
 				B9838D112F13AA8D00787A99 /* Products */,
 			);
@@ -187,6 +210,8 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
+				ja,
 			);
 			mainGroup = B9838D072F13AA8D00787A99;
 			minimizedProjectReferenceProxies = 1;
@@ -205,6 +230,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B9RES0052F17000000ABCDE /* en.lproj in Resources */,
+				B9RES0062F17000000ABCDE /* zh-Hans.lproj in Resources */,
+				B9RES0072F17000000ABCDE /* ja.lproj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -230,6 +258,8 @@
 				B9OAUTH052F15000000ABCDE /* OAuthCallbackServer.swift in Sources */,
 				B9OAUTH072F15000000ABCDE /* OAuthService.swift in Sources */,
 				B9OAUTH092F15000000ABCDE /* RemoteQuotaService.swift in Sources */,
+				B9L10N012F17000000ABCDE /* LocalizationManager.swift in Sources */,
+				B9L10N032F17000000ABCDE /* L10n.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var l10n = LocalizationManager.shared
 
     var body: some View {
         Form {
@@ -10,24 +11,24 @@ struct GeneralSettingsView: View {
                     Image(systemName: "power")
                         .foregroundStyle(.secondary)
                         .frame(width: 20)
-                    Toggle("Launch at Login", isOn: $appState.launchAtLogin)
+                    Toggle(L10n.General.launchAtLogin, isOn: $appState.launchAtLogin)
                 }
                 
                 HStack(spacing: 12) {
                     Image(systemName: "percent")
                         .foregroundStyle(.secondary)
                         .frame(width: 20)
-                    Toggle("Show Percentage in Menu Bar", isOn: $appState.showPercentage)
+                    Toggle(L10n.General.showPercentage, isOn: $appState.showPercentage)
                 }
                 
                 HStack(spacing: 12) {
                     Image(systemName: "circle.lefthalf.filled")
                         .foregroundStyle(.secondary)
                         .frame(width: 20)
-                    Toggle("Monochrome Icon", isOn: $appState.isMonochrome)
+                    Toggle(L10n.General.monochromeIcon, isOn: $appState.isMonochrome)
                 }
             } header: {
-                Label("Display", systemImage: "display")
+                Label(L10n.General.display, systemImage: "display")
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
@@ -37,7 +38,10 @@ struct GeneralSettingsView: View {
                     Image(systemName: "globe")
                         .foregroundStyle(.secondary)
                         .frame(width: 20)
-                    Picker("Language", selection: $appState.language) {
+                    Picker(L10n.General.language, selection: Binding(
+                        get: { l10n.currentLanguage },
+                        set: { l10n.setLanguage($0) }
+                    )) {
                         ForEach(AppLanguage.allCases) { language in
                             Text(language.displayName).tag(language)
                         }
@@ -47,17 +51,18 @@ struct GeneralSettingsView: View {
                 
                 HStack(spacing: 12) {
                     Color.clear.frame(width: 20)
-                    Text("Changes to language require a restart to take effect.")
+                    Text(L10n.General.languageRestartHint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Label("Localization", systemImage: "character.bubble")
+                Label(L10n.General.localization, systemImage: "character.bubble")
                     .font(.headline)
                     .foregroundStyle(.primary)
             }
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+        .id(l10n.refreshId)
     }
 }

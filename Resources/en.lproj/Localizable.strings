@@ -1,0 +1,79 @@
+/* General Settings */
+"settings.general" = "General";
+"settings.antigravity" = "Antigravity";
+"settings.about" = "About";
+
+"general.display" = "Display";
+"general.launchAtLogin" = "Launch at Login";
+"general.showPercentage" = "Show Percentage in Menu Bar";
+"general.monochromeIcon" = "Monochrome Icon";
+"general.localization" = "Localization";
+"general.language" = "Language";
+"general.languageRestartHint" = "Changes to language will take effect immediately.";
+
+/* About */
+"about.version" = "Version %@";
+"about.description" = "Monitor your Google Antigravity quota from the macOS menu bar.";
+"about.madeWith" = "Made with";
+"about.forDevelopers" = "for developers";
+
+/* Menu Dropdown */
+"menu.models" = "Models";
+"menu.updateInterval" = "Update Interval";
+"menu.interval30s" = "30s";
+"menu.interval2m" = "2m";
+"menu.interval1h" = "1h";
+"menu.refreshNow" = "Refresh Now";
+"menu.settings" = "Settings...";
+"menu.quit" = "Quit AgQuotaBar";
+"menu.noModels" = "No models available";
+"menu.notLoggedIn" = "Not logged in";
+"menu.loginWithGoogle" = "Login with Google";
+"menu.noModelsConfigured" = "No models configured";
+
+/* Antigravity Settings */
+"antigravity.mode" = "Mode";
+"antigravity.quotaFetchMethod" = "Quota Fetch Method";
+"antigravity.localMode" = "Local Mode";
+"antigravity.remoteMode" = "Remote Mode (Google API)";
+"antigravity.localModeDesc" = "Fetch quota via local Antigravity language server";
+"antigravity.remoteModeDesc" = "Fetch quota directly via Google API, requires Google account login";
+"antigravity.loggedIn" = "Logged In";
+"antigravity.logout" = "Logout";
+"antigravity.loginPrompt" = "Login with Google account to get quota info";
+"antigravity.remoteModeHint" = "Remote mode does not depend on local Antigravity environment.";
+"antigravity.loggingIn" = "Logging in...";
+"antigravity.loginWithGoogle" = "Login with Google Account";
+"antigravity.googleAccount" = "Google Account";
+"antigravity.addAccount" = "Add Account";
+"antigravity.email" = "Email";
+"antigravity.noModels" = "No models";
+"antigravity.modelVisibilityHint" = "Enable toggle to show model in menu bar dropdown";
+"antigravity.maxModelsReached" = "Maximum display count reached (7)";
+"antigravity.modelQuotaDisplay" = "Model Quota & Display";
+"antigravity.noAccounts" = "No accounts";
+"antigravity.modelVisibility" = "Model Visibility";
+"antigravity.setAsDefault" = "Set as Default";
+"antigravity.defaultAccount" = "Default Account";
+"antigravity.deleteAccount" = "Delete Account";
+"antigravity.accountTier" = "Account Tier: %@";
+
+/* Auth State */
+"auth.notAuthenticated" = "Not Logged In";
+"auth.authenticating" = "Logging in...";
+"auth.authenticated" = "Logged In";
+"auth.tokenExpired" = "Login Expired";
+"auth.refreshing" = "Refreshing...";
+"auth.error" = "Error: %@";
+
+/* OAuth Errors */
+"oauth.callbackServerFailed" = "Callback server failed to start: %@";
+"oauth.authorizationTimeout" = "Authorization timeout, please retry";
+"oauth.invalidState" = "Invalid authorization state (CSRF protection)";
+"oauth.authorizationDenied" = "Authorization denied: %@";
+"oauth.tokenExchangeFailed" = "Token exchange failed: %@";
+"oauth.tokenRefreshFailed" = "Token refresh failed: %@";
+"oauth.noRefreshToken" = "No refresh token available";
+"oauth.notAuthenticated" = "Not logged in";
+"oauth.networkError" = "Network error: %@";
+"oauth.apiError" = "API error (%d): %@";

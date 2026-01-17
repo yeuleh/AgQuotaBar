@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AntigravitySettingsView: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var l10n = LocalizationManager.shared
     @State private var newAccountEmail = ""
     @State private var isLoggingIn = false
 
@@ -19,28 +20,29 @@ struct AntigravitySettingsView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
+        .id(l10n.refreshId)
     }
     
     private var quotaModeSection: some View {
         Section {
-            Picker("模式", selection: $appState.quotaMode) {
+            Picker(L10n.Antigravity.mode, selection: $appState.quotaMode) {
                 ForEach(QuotaMode.allCases) { mode in
                     HStack(spacing: 8) {
                         Image(systemName: mode == .remote ? "cloud.fill" : "desktopcomputer")
                             .foregroundStyle(mode == .remote ? .blue : .green)
-                        Text(mode.displayName)
+                        Text(mode.localizedDisplayName)
                     }
                     .tag(mode)
                 }
             }
             .pickerStyle(.radioGroup)
             
-            Text(appState.quotaMode.description)
+            Text(appState.quotaMode.localizedDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 24)
         } header: {
-            Label("配额获取方式", systemImage: "arrow.triangle.2.circlepath")
+            Label(L10n.Antigravity.quotaFetchMethod, systemImage: "arrow.triangle.2.circlepath")
                 .font(.headline)
                 .foregroundStyle(.primary)
         }
@@ -60,7 +62,7 @@ struct AntigravitySettingsView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("已登录")
+                        Text(L10n.Antigravity.loggedIn)
                             .font(.headline)
                         
                         if let email = appState.remoteUserEmail {
@@ -74,7 +76,7 @@ struct AntigravitySettingsView: View {
                                 Image(systemName: "crown.fill")
                                     .font(.caption)
                                     .foregroundStyle(.orange)
-                                Text("账号级别: \(tier)")
+                                Text(L10n.Antigravity.accountTier(tier))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -83,7 +85,7 @@ struct AntigravitySettingsView: View {
                     
                     Spacer()
                     
-                    Button("登出") {
+                    Button(L10n.Antigravity.logout) {
                         appState.logout()
                     }
                     .buttonStyle(.bordered)
@@ -103,15 +105,15 @@ struct AntigravitySettingsView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(appState.oauthService.authState.displayText)
+                            Text(appState.oauthService.authState.localizedDisplayText)
                                 .font(.headline)
-                            Text("登录 Google 账号以获取配额信息")
+                            Text(L10n.Antigravity.loginPrompt)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
                     
-                    Text("远程模式不依赖本地 Antigravity 环境。")
+                    Text(L10n.Antigravity.remoteModeHint)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.leading, 52)
@@ -131,7 +133,7 @@ struct AntigravitySettingsView: View {
                             } else {
                                 Image(systemName: "person.badge.key.fill")
                             }
-                            Text(isLoggingIn ? "登录中..." : "使用 Google 账号登录")
+                            Text(isLoggingIn ? L10n.Antigravity.loggingIn : L10n.Antigravity.loginWithGoogle)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -142,7 +144,7 @@ struct AntigravitySettingsView: View {
                 .padding(.vertical, 4)
             }
         } header: {
-            Label("Google 账号", systemImage: "person.crop.circle")
+            Label(L10n.Antigravity.googleAccount, systemImage: "person.crop.circle")
                 .font(.headline)
                 .foregroundStyle(.primary)
         }
@@ -154,7 +156,7 @@ struct AntigravitySettingsView: View {
                 Image(systemName: "envelope.fill")
                     .foregroundStyle(.secondary)
                     .frame(width: 20)
-                TextField("Email", text: $newAccountEmail)
+                TextField(L10n.Antigravity.email, text: $newAccountEmail)
                     .textFieldStyle(.roundedBorder)
                 Button {
                     appState.addAccount(email: newAccountEmail)
@@ -168,7 +170,7 @@ struct AntigravitySettingsView: View {
                 .disabled(newAccountEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         } header: {
-            Label("添加账号", systemImage: "person.badge.plus")
+            Label(L10n.Antigravity.addAccount, systemImage: "person.badge.plus")
                 .font(.headline)
                 .foregroundStyle(.primary)
         }
@@ -190,14 +192,14 @@ struct AntigravitySettingsView: View {
                 HStack {
                     Image(systemName: "tray")
                         .foregroundStyle(.secondary)
-                    Text("暂无模型")
+                    Text(L10n.Antigravity.noModels)
                         .foregroundStyle(.secondary)
                 }
             } else {
                 let visibleCount = appState.visibleRemoteModelCount
                 let sortedModels = appState.remoteModels.sorted { $0.displayName.localizedCompare($1.displayName) == .orderedAscending }
                 
-                Text("开启开关以在菜单栏下拉列表中显示该模型")
+                Text(L10n.Antigravity.modelVisibilityHint)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
@@ -225,14 +227,14 @@ struct AntigravitySettingsView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                        Text("已达到最大显示数量 (7个)")
+                        Text(L10n.Antigravity.maxModelsReached)
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
                 }
             }
         } header: {
-            Label("模型配额与显示", systemImage: "chart.bar.fill")
+            Label(L10n.Antigravity.modelQuotaDisplay, systemImage: "chart.bar.fill")
                 .font(.headline)
                 .foregroundStyle(.primary)
         }
@@ -245,11 +247,11 @@ struct AntigravitySettingsView: View {
                     HStack {
                         Image(systemName: "person.crop.circle.badge.xmark")
                             .foregroundStyle(.secondary)
-                        Text("暂无账号")
+                        Text(L10n.Antigravity.noAccounts)
                             .foregroundStyle(.secondary)
                     }
                 } header: {
-                    Label("模型可见性", systemImage: "eye")
+                    Label(L10n.Antigravity.modelVisibility, systemImage: "eye")
                         .font(.headline)
                         .foregroundStyle(.primary)
                 }
@@ -260,7 +262,7 @@ struct AntigravitySettingsView: View {
                             HStack {
                                 Image(systemName: "tray")
                                     .foregroundStyle(.secondary)
-                                Text("暂无模型")
+                                Text(L10n.Antigravity.noModels)
                                     .foregroundStyle(.secondary)
                             }
                         } else {
@@ -292,9 +294,9 @@ struct AntigravitySettingsView: View {
             if appState.isDefaultAccount(id: account.id) {
                 Image(systemName: "star.fill")
                     .foregroundStyle(.yellow)
-                    .help("默认账号")
+                    .help(L10n.Antigravity.defaultAccount)
             } else {
-                Button("设为默认") {
+                Button(L10n.Antigravity.setAsDefault) {
                     appState.setDefaultAccount(id: account.id)
                 }
                 .font(.caption)
@@ -310,7 +312,7 @@ struct AntigravitySettingsView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                .help("删除账号")
+                .help(L10n.Antigravity.deleteAccount)
             }
         }
     }
