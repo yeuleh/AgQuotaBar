@@ -57,6 +57,5 @@ struct AboutSettingsView: View {
             .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .id(l10n.refreshId)
     }
 }

@@ -20,7 +20,6 @@ struct AntigravitySettingsView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .id(l10n.refreshId)
     }
     
     private var quotaModeSection: some View {

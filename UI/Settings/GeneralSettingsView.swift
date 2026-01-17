@@ -63,6 +63,5 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .scrollContentBackground(.hidden)
-        .id(l10n.refreshId)
     }
 }
