@@ -17,6 +17,10 @@ struct MenuDropdown: View {
         }
         return result
     }
+    
+    private var visibleRemoteModelsSliced: [RemoteModelQuota] {
+        Array(appState.visibleRemoteModels.prefix(7))
+    }
 
     var body: some View {
         Group {
@@ -24,32 +28,10 @@ struct MenuDropdown: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            let groups = groupedDisplayModels
-            if groups.isEmpty {
-                Text("No models configured")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            if appState.quotaMode == .remote {
+                remoteModelsSection
             } else {
-                ForEach(groups, id: \.account.id) { group in
-                    Text(group.account.email)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    ForEach(group.models, id: \.id) { model in
-                        let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
-                        Button {
-                            appState.selectModel(model, accountId: group.account.id)
-                        } label: {
-                            Label {
-                                Text("\(model.name)  \(percentageText)")
-                            } icon: {
-                                if appState.selectedModelId == model.id {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                }
+                localModelsSection
             }
 
             Divider()
@@ -80,6 +62,80 @@ struct MenuDropdown: View {
 
             Button("Quit AgQuotaBar") {
                 NSApplication.shared.terminate(nil)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var remoteModelsSection: some View {
+        let models = visibleRemoteModelsSliced
+        if models.isEmpty {
+            if appState.oauthService.isAuthenticated {
+                Text("No models available")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Not logged in")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Button("Login with Google") {
+                    Task {
+                        _ = await appState.login()
+                    }
+                }
+            }
+        } else {
+            if let email = appState.remoteUserEmail {
+                Text(email)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            ForEach(models) { model in
+                let percentageText = "\(model.remainingPercentage)%"
+                Button {
+                    appState.selectRemoteModel(model)
+                } label: {
+                    Label {
+                        Text("\(model.displayName)  \(percentageText)")
+                    } icon: {
+                        if appState.selectedModelId == model.id {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var localModelsSection: some View {
+        let groups = groupedDisplayModels
+        if groups.isEmpty {
+            Text("No models configured")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else {
+            ForEach(groups, id: \.account.id) { group in
+                Text(group.account.email)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                ForEach(group.models, id: \.id) { model in
+                    let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
+                    Button {
+                        appState.selectModel(model, accountId: group.account.id)
+                    } label: {
+                        Label {
+                            Text("\(model.name)  \(percentageText)")
+                        } icon: {
+                            if appState.selectedModelId == model.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
             }
         }
     }

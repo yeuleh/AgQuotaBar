@@ -26,10 +26,12 @@ private enum PreferenceKey {
     static let language = "language"
     static let launchAtLogin = "launchAtLogin"
     static let hiddenModelIds = "hiddenModelIds"
+    static let hiddenRemoteModelIds = "hiddenRemoteModelIds"
     static let pollingInterval = "pollingInterval"
     static let selectedModelId = "selectedModelId"
     static let accounts = "accounts"
     static let defaultAccountId = "defaultAccountId"
+    static let quotaMode = "quotaMode"
 }
 
 enum AppLanguage: String, CaseIterable, Identifiable {
@@ -118,11 +120,28 @@ final class AppState: ObservableObject {
         }
     }
     @Published private var hiddenModelIdsByAccount: [String: Set<String>]
+    @Published private var hiddenRemoteModelIds: Set<String>
     @Published var isStale: Bool = false
+    
+    @Published var quotaMode: QuotaMode {
+        didSet {
+            if oldValue != quotaMode {
+                UserDefaults.standard.set(quotaMode.rawValue, forKey: PreferenceKey.quotaMode)
+                restartPolling()
+            }
+        }
+    }
+    
+    @Published var remoteModels: [RemoteModelQuota] = []
+    @Published var remoteUserEmail: String?
+    @Published var remoteTier: String?
 
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
 
-    private let quotaService = LocalQuotaService()
+    private let localQuotaService = LocalQuotaService()
+    private lazy var remoteQuotaService = RemoteQuotaService()
+    let oauthService = OAuthService.shared
+    
     private var pollingTask: Task<Void, Never>?
     private var isUpdatingLaunchAtLogin = false
     private var isReorderingAccounts = false
@@ -135,11 +154,16 @@ final class AppState: ObservableObject {
         language = AppLanguage(rawValue: languageRaw) ?? .english
         launchAtLogin = defaults.object(forKey: PreferenceKey.launchAtLogin) as? Bool ?? (SMAppService.mainApp.status == .enabled)
         hiddenModelIdsByAccount = Self.loadHiddenModelIds()
+        hiddenRemoteModelIds = Self.loadHiddenRemoteModelIds()
         storedAccounts = Self.loadStoredAccounts()
         let storedInterval = defaults.object(forKey: PreferenceKey.pollingInterval) as? Double
         pollingInterval = storedInterval ?? 120
         selectedModelId = defaults.string(forKey: PreferenceKey.selectedModelId)
         defaultAccountId = defaults.string(forKey: PreferenceKey.defaultAccountId)
+        
+        let modeRaw = defaults.string(forKey: PreferenceKey.quotaMode) ?? QuotaMode.local.rawValue
+        quotaMode = QuotaMode(rawValue: modeRaw) ?? .local
+        
         accounts = storedAccounts.map { Account(id: $0.id, email: $0.email, models: []) }
 
         log("AppState init")
@@ -153,6 +177,12 @@ final class AppState: ObservableObject {
         guard isStale == false else {
             return nil
         }
+        
+        if quotaMode == .remote {
+            guard let selectedModelId else { return nil }
+            return remoteModels.first(where: { $0.id == selectedModelId })?.remainingPercentage
+        }
+        
         guard let selectedModelId else {
             return nil
         }
@@ -182,10 +212,30 @@ final class AppState: ObservableObject {
             isModelVisible(accountId: item.account.id, modelId: item.model.id)
         }
     }
+    
+    var allAvailableModels: [QuotaModel] {
+        if quotaMode == .remote {
+            return remoteModels.map { remote in
+                QuotaModel(
+                    id: remote.id,
+                    name: remote.displayName,
+                    remainingPercentage: remote.remainingPercentage,
+                    resetTime: remote.resetTime,
+                    isExhausted: remote.isExhausted
+                )
+            }
+        } else {
+            return accounts.flatMap { $0.models }
+        }
+    }
 
     func selectModel(_ model: QuotaModel, accountId: String) {
         selectedModelId = model.id
         defaultAccountId = accountId
+    }
+    
+    func selectRemoteModel(_ model: RemoteModelQuota) {
+        selectedModelId = model.id
     }
 
     func addAccount(email: String) {
@@ -246,17 +296,107 @@ final class AppState: ObservableObject {
         hiddenModelIdsByAccount[accountId] = hiddenIds
         persistHiddenModelIds()
     }
+    
+    // MARK: - Remote Model Visibility
+    
+    var visibleRemoteModels: [RemoteModelQuota] {
+        remoteModels.filter { isRemoteModelVisible(modelId: $0.id) }
+    }
+    
+    func remoteModelVisibilityBinding(modelId: String) -> Binding<Bool> {
+        Binding(
+            get: { [weak self] in
+                self?.isRemoteModelVisible(modelId: modelId) ?? true
+            },
+            set: { [weak self] newValue in
+                self?.setRemoteModelVisible(modelId: modelId, visible: newValue)
+            }
+        )
+    }
+    
+    func isRemoteModelVisible(modelId: String) -> Bool {
+        hiddenRemoteModelIds.contains(modelId) == false
+    }
+    
+    func setRemoteModelVisible(modelId: String, visible: Bool) {
+        if visible {
+            hiddenRemoteModelIds.remove(modelId)
+        } else {
+            hiddenRemoteModelIds.insert(modelId)
+        }
+        persistHiddenRemoteModelIds()
+    }
+    
+    var visibleRemoteModelCount: Int {
+        remoteModels.count - hiddenRemoteModelIds.count
+    }
 
     func refreshNow() async {
-        log("refreshNow: starting")
+        log("refreshNow: starting, mode=\(quotaMode)")
+        
+        if quotaMode == .remote {
+            await refreshRemote()
+        } else {
+            await refreshLocal()
+        }
+    }
+    
+    private func refreshLocal() async {
         do {
-            let snapshot = try await quotaService.fetchQuota()
-            log("refreshNow: got \(snapshot.models.count) models")
+            let snapshot = try await localQuotaService.fetchQuota()
+            log("refreshLocal: got \(snapshot.models.count) models")
             apply(snapshot: snapshot)
         } catch {
-            log("refreshNow: error \(error)")
+            log("refreshLocal: error \(error)")
             markStale()
         }
+    }
+    
+    private func refreshRemote() async {
+        guard oauthService.isAuthenticated else {
+            log("refreshRemote: not authenticated")
+            markStale()
+            return
+        }
+        
+        do {
+            let snapshot = try await remoteQuotaService.fetchQuota()
+            log("refreshRemote: got \(snapshot.models.count) models")
+            applyRemote(snapshot: snapshot)
+        } catch {
+            log("refreshRemote: error \(error)")
+            if let oauthError = error as? OAuthError, oauthError.needsReauth {
+                log("refreshRemote: token expired, need reauth")
+            }
+            markStale()
+        }
+    }
+    
+    private func applyRemote(snapshot: RemoteQuotaSnapshot) {
+        remoteModels = snapshot.models
+        remoteUserEmail = snapshot.userEmail
+        remoteTier = snapshot.tier
+        isStale = false
+        
+        if selectedModelId == nil || remoteModels.contains(where: { $0.id == selectedModelId }) == false {
+            selectedModelId = remoteModels.first?.id
+        }
+    }
+    
+    func login() async -> Bool {
+        let success = await oauthService.login()
+        if success {
+            restartPolling()
+        }
+        return success
+    }
+    
+    func logout() {
+        _ = oauthService.logout()
+        remoteModels = []
+        remoteUserEmail = nil
+        remoteTier = nil
+        isStale = true
     }
 
     func openSettingsWindow() {
@@ -274,6 +414,11 @@ final class AppState: ObservableObject {
         }
         return result
     }
+    
+    private static func loadHiddenRemoteModelIds() -> Set<String> {
+        let raw = UserDefaults.standard.array(forKey: PreferenceKey.hiddenRemoteModelIds) as? [String] ?? []
+        return Set(raw)
+    }
 
     private static func loadStoredAccounts() -> [StoredAccount] {
         guard let data = UserDefaults.standard.data(forKey: PreferenceKey.accounts) else {
@@ -285,6 +430,10 @@ final class AppState: ObservableObject {
     private func persistHiddenModelIds() {
         let raw = hiddenModelIdsByAccount.mapValues { Array($0) }
         UserDefaults.standard.set(raw, forKey: PreferenceKey.hiddenModelIds)
+    }
+    
+    private func persistHiddenRemoteModelIds() {
+        UserDefaults.standard.set(Array(hiddenRemoteModelIds), forKey: PreferenceKey.hiddenRemoteModelIds)
     }
 
     private func persistStoredAccounts() {

@@ -17,6 +17,11 @@
 		B92851372F13AB7E00F499DC /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92851232F13AB7E00F499DC /* AppState.swift */; };
 		B92851382F13AB7E00F499DC /* AgQuotaBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B92851222F13AB7E00F499DC /* AgQuotaBarApp.swift */; };
 		B9E1A0012F14000000ABCDE /* LocalQuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */; };
+		B9OAUTH012F15000000ABCDE /* OAuthModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH022F15000000ABCDE /* OAuthModels.swift */; };
+		B9OAUTH032F15000000ABCDE /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH042F15000000ABCDE /* KeychainService.swift */; };
+		B9OAUTH052F15000000ABCDE /* OAuthCallbackServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH062F15000000ABCDE /* OAuthCallbackServer.swift */; };
+		B9OAUTH072F15000000ABCDE /* OAuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH082F15000000ABCDE /* OAuthService.swift */; };
+		B9OAUTH092F15000000ABCDE /* RemoteQuotaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9OAUTH0A2F15000000ABCDE /* RemoteQuotaService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +35,11 @@
 		B928512C2F13AB7E00F499DC /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
 		B928512D2F13AB7E00F499DC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalQuotaService.swift; sourceTree = "<group>"; };
+		B9OAUTH022F15000000ABCDE /* OAuthModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthModels.swift; sourceTree = "<group>"; };
+		B9OAUTH042F15000000ABCDE /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		B9OAUTH062F15000000ABCDE /* OAuthCallbackServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthCallbackServer.swift; sourceTree = "<group>"; };
+		B9OAUTH082F15000000ABCDE /* OAuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthService.swift; sourceTree = "<group>"; };
+		B9OAUTH0A2F15000000ABCDE /* RemoteQuotaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteQuotaService.swift; sourceTree = "<group>"; };
 		B9838D102F13AA8D00787A99 /* AgQuotaBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AgQuotaBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -65,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				B92851252F13AB7E00F499DC /* Placeholders.swift */,
+				B9OAUTH022F15000000ABCDE /* OAuthModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -102,6 +113,10 @@
 			isa = PBXGroup;
 			children = (
 				B9E1A0022F14000000ABCDE /* LocalQuotaService.swift */,
+				B9OAUTH042F15000000ABCDE /* KeychainService.swift */,
+				B9OAUTH062F15000000ABCDE /* OAuthCallbackServer.swift */,
+				B9OAUTH082F15000000ABCDE /* OAuthService.swift */,
+				B9OAUTH0A2F15000000ABCDE /* RemoteQuotaService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -210,6 +225,11 @@
 				B92851372F13AB7E00F499DC /* AppState.swift in Sources */,
 				B92851382F13AB7E00F499DC /* AgQuotaBarApp.swift in Sources */,
 				B9E1A0012F14000000ABCDE /* LocalQuotaService.swift in Sources */,
+				B9OAUTH012F15000000ABCDE /* OAuthModels.swift in Sources */,
+				B9OAUTH032F15000000ABCDE /* KeychainService.swift in Sources */,
+				B9OAUTH052F15000000ABCDE /* OAuthCallbackServer.swift in Sources */,
+				B9OAUTH072F15000000ABCDE /* OAuthService.swift in Sources */,
+				B9OAUTH092F15000000ABCDE /* RemoteQuotaService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
