@@ -203,6 +203,10 @@ struct RemoteModelQuota: Identifiable, Hashable {
     let remainingPercentage: Int
     let resetTime: Date?
     let isExhausted: Bool
+
+    var usedPercentage: Int {
+        min(100, max(0, 100 - remainingPercentage))
+    }
     
     init(modelName: String, displayName: String, remainingFraction: Double, resetTimeString: String?) {
         self.id = modelName

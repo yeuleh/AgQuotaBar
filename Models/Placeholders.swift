@@ -6,6 +6,12 @@ struct QuotaModel: Identifiable, Hashable {
     let remainingPercentage: Int?
     let resetTime: Date?
     let isExhausted: Bool
+
+    var usedPercentage: Int? {
+        remainingPercentage.map { percentage in
+            min(100, max(0, 100 - percentage))
+        }
+    }
 }
 
 struct Account: Identifiable, Hashable {

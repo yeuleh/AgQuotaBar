@@ -16,11 +16,15 @@ struct MenuDropdown: View {
                 result.append((account: item.account, models: [item.model]))
             }
         }
-        return result
+        return result.map { group in
+            let sortedModels = group.models.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return (account: group.account, models: sortedModels)
+        }
     }
     
     private var visibleRemoteModelsSliced: [RemoteModelQuota] {
-        Array(appState.visibleRemoteModels.prefix(7))
+        let sliced = appState.visibleRemoteModels.prefix(7)
+        return sliced.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
     var body: some View {
@@ -117,9 +121,13 @@ struct MenuDropdown: View {
                                 .foregroundStyle(.secondary)
                         }
                         Text(model.displayName)
-                        Spacer()
-                        Text("\(model.remainingPercentage)%")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        QuotaRing(percentage: Double(model.remainingPercentage))
+                        Text("\(model.usedPercentage)%")
+                            .font(.system(size: 11, weight: .medium))
                             .monospacedDigit()
+                            .layoutPriority(1)
                             .foregroundStyle(quotaColor(for: model.remainingPercentage))
                     }
                 }
@@ -141,7 +149,7 @@ struct MenuDropdown: View {
                     .foregroundStyle(.secondary)
 
                 ForEach(group.models, id: \.id) { model in
-                    let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
+                    let percentageText = model.usedPercentage.map { "\($0)%" } ?? "--"
                     Button {
                         appState.selectModel(model, accountId: group.account.id)
                     } label: {
@@ -154,9 +162,15 @@ struct MenuDropdown: View {
                                     .foregroundStyle(.secondary)
                             }
                             Text(model.name)
-                            Spacer()
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                            if let remaining = model.remainingPercentage {
+                                QuotaRing(percentage: Double(remaining))
+                            }
                             Text(percentageText)
+                                .font(.system(size: 11, weight: .medium))
                                 .monospacedDigit()
+                                .layoutPriority(1)
                                 .foregroundStyle(model.remainingPercentage.map { quotaColor(for: $0) } ?? .secondary)
                         }
                     }
@@ -175,5 +189,65 @@ struct MenuDropdown: View {
         } else {
             return .gray
         }
+    }
+}
+
+private struct QuotaRing: View {
+    let percentage: Double
+    
+    var body: some View {
+        Image(nsImage: renderRing())
+            .renderingMode(.original)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 14, height: 14)
+    }
+    
+    private func renderRing() -> NSImage {
+        let size: CGFloat = 14
+        let lineWidth: CGFloat = 2
+        let scale: CGFloat = 2
+        let pixelSize = NSSize(width: size * scale, height: size * scale)
+        let image = NSImage(size: pixelSize)
+        
+        image.lockFocus()
+        if let context = NSGraphicsContext.current?.cgContext {
+            context.scaleBy(x: scale, y: scale)
+            
+            // Background
+            let rect = CGRect(x: lineWidth/2, y: lineWidth/2, width: size - lineWidth, height: size - lineWidth)
+            let bgPath = NSBezierPath(ovalIn: rect)
+            bgPath.lineWidth = lineWidth
+            NSColor.labelColor.withAlphaComponent(0.2).setStroke()
+            bgPath.stroke()
+            
+            // Foreground
+            if percentage > 0 {
+                let startAngle: CGFloat = 90
+                let endAngle: CGFloat = 90 - (360 * CGFloat(min(percentage, 100)) / 100)
+                
+                let path = NSBezierPath()
+                let center = CGPoint(x: size/2, y: size/2)
+                let radius = (size - lineWidth) / 2
+                
+                path.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
+                
+                let nsColor: NSColor
+                if percentage >= 50 { nsColor = .systemGreen }
+                else if percentage >= 30 { nsColor = .systemYellow }
+                else if percentage > 0 { nsColor = .systemRed }
+                else { nsColor = .systemGray }
+                
+                nsColor.setStroke()
+                path.lineWidth = lineWidth
+                path.lineCapStyle = .round
+                path.stroke()
+            }
+        }
+        image.unlockFocus()
+        
+        image.size = NSSize(width: size, height: size)
+        image.isTemplate = false
+        return image
     }
 }
