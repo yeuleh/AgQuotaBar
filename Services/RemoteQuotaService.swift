@@ -22,8 +22,8 @@ final class RemoteQuotaService {
     private let oauthService: OAuthService
     private let session: URLSession
     
-    init(oauthService: OAuthService = OAuthService.shared) {
-        self.oauthService = oauthService
+    init(oauthService: OAuthService? = nil) {
+        self.oauthService = oauthService ?? OAuthService.shared
         
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = OAuthConstants.apiTimeoutSeconds

@@ -24,21 +24,27 @@ final class OAuthCallbackServer {
         
         return try await withCheckedThrowingContinuation { continuation in
             listener?.stateUpdateHandler = { [weak self] state in
-                switch state {
-                case .ready:
-                    if let port = self?.listener?.port?.rawValue {
-                        self?.port = port
-                        continuation.resume(returning: port)
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+
+                    switch state {
+                    case .ready:
+                        if let port = self.listener?.port?.rawValue {
+                            self.port = port
+                            continuation.resume(returning: port)
+                        }
+                    case .failed(let error):
+                        continuation.resume(throwing: OAuthError.callbackServerFailed(error.localizedDescription))
+                    default:
+                        break
                     }
-                case .failed(let error):
-                    continuation.resume(throwing: OAuthError.callbackServerFailed(error.localizedDescription))
-                default:
-                    break
                 }
             }
             
             listener?.newConnectionHandler = { [weak self] connection in
-                self?.handleConnection(connection)
+                Task { @MainActor [weak self] in
+                    self?.handleConnection(connection)
+                }
             }
             
             listener?.start(queue: .global(qos: .userInitiated))
