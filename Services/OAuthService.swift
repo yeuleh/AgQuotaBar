@@ -11,19 +11,53 @@ final class OAuthService: ObservableObject {
     @Published private(set) var userEmail: String?
     
     private let keychain = KeychainService.shared
+    private let accountDefaultsKey = "oauth.keychain.account"
+    private let defaultAccountId = "default"
     private var callbackServer: OAuthCallbackServer?
+    private var activeAccountId: String? {
+        didSet {
+            if let activeAccountId {
+                UserDefaults.standard.set(activeAccountId, forKey: accountDefaultsKey)
+            } else {
+                UserDefaults.standard.removeObject(forKey: accountDefaultsKey)
+            }
+        }
+    }
+    
+    private var keychainAccountId: String {
+        activeAccountId ?? defaultAccountId
+    }
+    
+    func setActiveAccount(id: String?) {
+        let resolved = id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        activeAccountId = resolved.isEmpty ? nil : resolved
+        userEmail = nil
+        initializeState()
+    }
     
     private init() {
+        activeAccountId = UserDefaults.standard.string(forKey: accountDefaultsKey)
         initializeState()
     }
     
     private func initializeState() {
-        guard keychain.hasToken() else {
+        let resolvedAccount = activeAccountId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if resolvedAccount.isEmpty {
+            activeAccountId = nil
+        }
+        
+        let accountId = keychainAccountId
+        guard keychain.hasToken(account: accountId) else {
             authState = .notAuthenticated
+            userEmail = nil
             return
         }
         
-        if keychain.isTokenExpired() {
+        if userEmail == nil, accountId != defaultAccountId {
+            userEmail = accountId
+        }
+        
+        if keychain.isTokenExpired(account: accountId) {
             Task {
                 do {
                     try await refreshToken()
@@ -69,9 +103,11 @@ final class OAuthService: ObservableObject {
                 codeVerifier: codeVerifier
             )
             
-            try keychain.saveToken(tokenData)
-            
-            if let email = try? await fetchUserEmail(accessToken: tokenData.accessToken) {
+            let resolvedAccountId = try? await fetchUserEmail(accessToken: tokenData.accessToken)
+            let accountId = resolvedAccountId ?? defaultAccountId
+            activeAccountId = accountId
+            try keychain.saveToken(tokenData, account: accountId)
+            if let email = resolvedAccountId {
                 userEmail = email
             }
             
@@ -104,9 +140,11 @@ final class OAuthService: ObservableObject {
                 source: .imported
             )
             
-            try keychain.saveToken(tokenData)
-            
-            if let email = try? await fetchUserEmail(accessToken: tokenData.accessToken) {
+            let resolvedAccountId = try? await fetchUserEmail(accessToken: tokenData.accessToken)
+            let accountId = resolvedAccountId ?? defaultAccountId
+            activeAccountId = accountId
+            try keychain.saveToken(tokenData, account: accountId)
+            if let email = resolvedAccountId {
                 userEmail = email
             }
             
@@ -115,7 +153,8 @@ final class OAuthService: ObservableObject {
             
         } catch {
             log("Login with refresh token failed: \(error)")
-            keychain.deleteToken()
+            keychain.deleteToken(account: keychainAccountId)
+            userEmail = nil
             authState = .notAuthenticated
             return false
         }
@@ -123,14 +162,15 @@ final class OAuthService: ObservableObject {
     
     func logout() -> Bool {
         let wasAuthenticated = authState.isLoggedIn
-        keychain.deleteToken()
+        keychain.deleteToken(account: keychainAccountId)
         userEmail = nil
+        activeAccountId = nil
         authState = .notAuthenticated
         return wasAuthenticated
     }
     
     func getValidAccessToken() async throws -> String {
-        guard let token = keychain.getToken() else {
+        guard let token = keychain.getToken(account: keychainAccountId) else {
             authState = .notAuthenticated
             throw OAuthError.notAuthenticated
         }
@@ -139,7 +179,7 @@ final class OAuthService: ObservableObject {
             try await refreshToken()
         }
         
-        guard let accessToken = keychain.getAccessToken() else {
+        guard let accessToken = keychain.getAccessToken(account: keychainAccountId) else {
             throw OAuthError.notAuthenticated
         }
         
@@ -147,7 +187,7 @@ final class OAuthService: ObservableObject {
     }
     
     private func refreshToken() async throws {
-        guard let refreshToken = keychain.getRefreshToken() else {
+        guard let refreshToken = keychain.getRefreshToken(account: keychainAccountId) else {
             authState = .notAuthenticated
             throw OAuthError.noRefreshToken
         }
@@ -156,7 +196,7 @@ final class OAuthService: ObservableObject {
         
         do {
             let tokenResponse = try await performTokenRefresh(refreshToken: refreshToken)
-            try keychain.updateAccessToken(tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn)
+            try keychain.updateAccessToken(tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn, account: keychainAccountId)
             authState = .authenticated
         } catch {
             if isReauthRequired(error) {

@@ -386,6 +386,19 @@ final class AppState: ObservableObject {
         isStale = true
     }
 
+    func setRemoteAccount(id: String?) {
+        let resolved = id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let accountId = resolved.isEmpty ? nil : resolved
+        oauthService.setActiveAccount(id: accountId)
+        remoteModels = []
+        remoteUserEmail = oauthService.userEmail
+        remoteTier = nil
+        isStale = true
+        Task { [weak self] in
+            await self?.refreshNow()
+        }
+    }
+
     func openSettingsWindow() {
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         NSApp.activate(ignoringOtherApps: true)
