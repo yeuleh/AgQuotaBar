@@ -6,17 +6,17 @@ struct SettingsView: View {
     var body: some View {
         TabView(selection: $appState.selectedSettingsTab) {
             GeneralSettingsView()
-                .tabItem { Label("General", systemImage: "gear") }
+                .tabItem { Label("General", systemImage: "gearshape.fill") }
                 .tag(AppState.SettingsTab.general)
 
             AntigravitySettingsView()
-                .tabItem { Label("Antigravity", systemImage: "cloud.fill") }
+                .tabItem { Label("Antigravity", systemImage: "bolt.horizontal.fill") }
                 .tag(AppState.SettingsTab.antigravity)
 
             AboutSettingsView()
-                .tabItem { Label("About", systemImage: "info.circle") }
+                .tabItem { Label("About", systemImage: "info.circle.fill") }
                 .tag(AppState.SettingsTab.about)
         }
-        .frame(width: 460, height: 320)
+        .frame(width: 520, height: 420)
     }
 }

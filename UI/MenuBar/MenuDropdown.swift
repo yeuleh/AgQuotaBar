@@ -25,7 +25,7 @@ struct MenuDropdown: View {
     var body: some View {
         Group {
             Text("Models")
-                .font(.caption)
+                .font(.caption.bold())
                 .foregroundStyle(.secondary)
 
             if appState.quotaMode == .remote {
@@ -36,33 +36,41 @@ struct MenuDropdown: View {
 
             Divider()
 
-            Picker("Update", selection: $appState.pollingInterval) {
+            Picker("Update Interval", selection: $appState.pollingInterval) {
                 Text("30s").tag(30.0)
                 Text("2m").tag(120.0)
                 Text("1h").tag(3600.0)
             }
 
-            Button("Refresh") {
+            Button {
                 Task {
                     await appState.refreshNow()
                 }
+            } label: {
+                Label("Refresh Now", systemImage: "arrow.clockwise")
             }
+            .keyboardShortcut("r", modifiers: .command)
 
             Divider()
 
             if #available(macOS 14, *) {
                 SettingsLink {
-                    Text("Settings")
+                    Label("Settings...", systemImage: "gearshape")
                 }
             } else {
-                Button("Settings") {
+                Button {
                     appState.openSettingsWindow()
+                } label: {
+                    Label("Settings...", systemImage: "gearshape")
                 }
             }
 
-            Button("Quit AgQuotaBar") {
+            Button {
                 NSApplication.shared.terminate(nil)
+            } label: {
+                Label("Quit AgQuotaBar", systemImage: "power")
             }
+            .keyboardShortcut("q", modifiers: .command)
         }
     }
     
@@ -79,30 +87,38 @@ struct MenuDropdown: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                Button("Login with Google") {
+                Button {
                     Task {
                         _ = await appState.login()
                     }
+                } label: {
+                    Label("Login with Google", systemImage: "person.badge.key")
                 }
             }
         } else {
             if let email = appState.remoteUserEmail {
-                Text(email)
+                Label(email, systemImage: "person.circle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             
             ForEach(models) { model in
-                let percentageText = "\(model.remainingPercentage)%"
                 Button {
                     appState.selectRemoteModel(model)
                 } label: {
-                    Label {
-                        Text("\(model.displayName)  \(percentageText)")
-                    } icon: {
+                    HStack(spacing: 8) {
                         if appState.selectedModelId == model.id {
-                            Image(systemName: "checkmark")
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.blue)
+                        } else {
+                            Image(systemName: "circle")
+                                .foregroundStyle(.secondary)
                         }
+                        Text(model.displayName)
+                        Spacer()
+                        Text("\(model.remainingPercentage)%")
+                            .monospacedDigit()
+                            .foregroundStyle(quotaColor(for: model.remainingPercentage))
                     }
                 }
             }
@@ -118,7 +134,7 @@ struct MenuDropdown: View {
                 .foregroundStyle(.secondary)
         } else {
             ForEach(groups, id: \.account.id) { group in
-                Text(group.account.email)
+                Label(group.account.email, systemImage: "person.circle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -127,16 +143,35 @@ struct MenuDropdown: View {
                     Button {
                         appState.selectModel(model, accountId: group.account.id)
                     } label: {
-                        Label {
-                            Text("\(model.name)  \(percentageText)")
-                        } icon: {
+                        HStack(spacing: 8) {
                             if appState.selectedModelId == model.id {
-                                Image(systemName: "checkmark")
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.blue)
+                            } else {
+                                Image(systemName: "circle")
+                                    .foregroundStyle(.secondary)
                             }
+                            Text(model.name)
+                            Spacer()
+                            Text(percentageText)
+                                .monospacedDigit()
+                                .foregroundStyle(model.remainingPercentage.map { quotaColor(for: $0) } ?? .secondary)
                         }
                     }
                 }
             }
+        }
+    }
+    
+    private func quotaColor(for percentage: Int) -> Color {
+        if percentage >= 50 {
+            return .green
+        } else if percentage >= 30 {
+            return .yellow
+        } else if percentage > 0 {
+            return .red
+        } else {
+            return .gray
         }
     }
 }
