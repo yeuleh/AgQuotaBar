@@ -19,9 +19,13 @@ struct AboutSettingsView: View {
                     .frame(width: 80, height: 80)
                     .shadow(color: .blue.opacity(0.3), radius: 12, y: 6)
                 
-                Image(systemName: "chart.bar.doc.horizontal.fill")
-                    .font(.system(size: 36, weight: .medium))
-                    .foregroundStyle(.white)
+                GravityArc(
+                    percentage: 72,
+                    ringColor: Color.white,
+                    trackColor: Color.white.opacity(0.25),
+                    lineWidth: 6
+                )
+                .frame(width: 44, height: 44)
             }
             .padding(.bottom, 20)
             

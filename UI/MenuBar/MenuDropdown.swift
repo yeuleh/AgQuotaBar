@@ -243,22 +243,17 @@ struct MenuModelRowView: View {
 
 private struct QuotaRing: View {
     let percentage: Double
-    
+
     var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.primary.opacity(0.25), lineWidth: 2.5)
-            
-            if percentage > 0 {
-                Circle()
-                    .trim(from: 0, to: CGFloat(min(percentage, 100)) / 100)
-                    .stroke(ringColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-            }
-        }
+        GravityArc(
+            percentage: percentage,
+            ringColor: ringColor,
+            trackColor: Color.primary.opacity(0.25),
+            lineWidth: 2.5
+        )
         .frame(width: 14, height: 14)
     }
-    
+
     private var ringColor: Color {
         if percentage >= 70 { return .green }
         else if percentage >= 30 { return .yellow }
