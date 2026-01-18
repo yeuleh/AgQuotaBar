@@ -1,5 +1,5 @@
-import AppKit
 import SwiftUI
+import AppKit
 
 struct MenuDropdown: View {
     @ObservedObject var appState: AppState
@@ -58,16 +58,8 @@ struct MenuDropdown: View {
 
             Divider()
 
-            if #available(macOS 14, *) {
-                SettingsLink {
-                    Label(L10n.Menu.settings, systemImage: "gearshape")
-                }
-            } else {
-                Button {
-                    appState.openSettingsWindow()
-                } label: {
-                    Label(L10n.Menu.settings, systemImage: "gearshape")
-                }
+            SettingsLink {
+                Label(L10n.Menu.settings, systemImage: "gearshape")
             }
 
             Button {
@@ -253,58 +245,24 @@ private struct QuotaRing: View {
     let percentage: Double
     
     var body: some View {
-        Image(nsImage: renderRing())
-            .renderingMode(.original)
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 14, height: 14)
-    }
-    
-    private func renderRing() -> NSImage {
-        let size: CGFloat = 14
-        let lineWidth: CGFloat = 2.5
-        let scale: CGFloat = 2
-        let pixelSize = NSSize(width: size * scale, height: size * scale)
-        let image = NSImage(size: pixelSize)
-        
-        image.lockFocus()
-        if let context = NSGraphicsContext.current?.cgContext {
-            context.scaleBy(x: scale, y: scale)
+        ZStack {
+            Circle()
+                .stroke(Color.primary.opacity(0.25), lineWidth: 2.5)
             
-            // Background
-            let rect = CGRect(x: lineWidth/2, y: lineWidth/2, width: size - lineWidth, height: size - lineWidth)
-            let bgPath = NSBezierPath(ovalIn: rect)
-            bgPath.lineWidth = lineWidth
-            NSColor.labelColor.withAlphaComponent(0.25).setStroke()
-            bgPath.stroke()
-            
-            // Foreground
             if percentage > 0 {
-                let startAngle: CGFloat = 90
-                let endAngle: CGFloat = 90 - (360 * CGFloat(min(percentage, 100)) / 100)
-                
-                let path = NSBezierPath()
-                let center = CGPoint(x: size/2, y: size/2)
-                let radius = (size - lineWidth) / 2
-                
-                path.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
-                
-                let nsColor: NSColor
-                if percentage >= 70 { nsColor = .systemGreen }
-                else if percentage >= 30 { nsColor = .systemYellow }
-                else if percentage > 0 { nsColor = .systemRed }
-                else { nsColor = .systemGray }
-                
-                nsColor.setStroke()
-                path.lineWidth = lineWidth
-                path.lineCapStyle = .round
-                path.stroke()
+                Circle()
+                    .trim(from: 0, to: CGFloat(min(percentage, 100)) / 100)
+                    .stroke(ringColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
             }
         }
-        image.unlockFocus()
-        
-        image.size = NSSize(width: size, height: size)
-        image.isTemplate = false
-        return image
+        .frame(width: 14, height: 14)
+    }
+    
+    private var ringColor: Color {
+        if percentage >= 70 { return .green }
+        else if percentage >= 30 { return .yellow }
+        else if percentage > 0 { return .red }
+        else { return .gray }
     }
 }

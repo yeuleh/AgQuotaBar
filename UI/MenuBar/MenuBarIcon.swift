@@ -8,7 +8,19 @@ struct MenuBarIcon: View {
 
     var body: some View {
         HStack(spacing: 3) {
-            Image(nsImage: renderRingImage())
+            ZStack {
+                Circle()
+                    .stroke(Color.primary.opacity(0.25), lineWidth: 2.5)
+                
+                if let ringTrim = ringTrim, ringTrim > 0 {
+                    Circle()
+                        .trim(from: 0, to: ringTrim)
+                        .stroke(ringColor, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                }
+            }
+            .frame(width: 14, height: 14)
+            .padding(4)
 
             if showPercentage {
                 if let percentage {
@@ -24,56 +36,14 @@ struct MenuBarIcon: View {
         }
     }
     
-    private func renderRingImage() -> NSImage {
-        let pointSize: CGFloat = 22
-        let ringDiameter: CGFloat = 14
-        let lineWidth: CGFloat = 2.5
-        let scale: CGFloat = 2
-        let pixelSize = NSSize(width: pointSize * scale, height: pointSize * scale)
-        let image = NSImage(size: pixelSize)
-
-        image.lockFocus()
-        NSGraphicsContext.current?.cgContext.scaleBy(x: scale, y: scale)
-
-        let ringOrigin = (pointSize - ringDiameter) / 2
-        let ringRect = NSRect(
-            x: ringOrigin + (lineWidth / 2),
-            y: ringOrigin + (lineWidth / 2),
-            width: ringDiameter - lineWidth,
-            height: ringDiameter - lineWidth
-        )
-        let backgroundPath = NSBezierPath(ovalIn: ringRect)
-        NSColor.labelColor.withAlphaComponent(0.25).setStroke()
-        backgroundPath.lineWidth = lineWidth
-        backgroundPath.stroke()
-
-        if ringTrim > 0 {
-            let foregroundPath = NSBezierPath()
-            let center = NSPoint(x: pointSize / 2, y: pointSize / 2)
-            let radius = (ringDiameter - lineWidth) / 2
-            let startAngle: CGFloat = 90
-            let endAngle: CGFloat = 90 - (360 * ringTrim)
-            foregroundPath.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
-            ringNSColor.setStroke()
-            foregroundPath.lineWidth = lineWidth
-            foregroundPath.lineCapStyle = .round
-            foregroundPath.stroke()
-        }
-
-        image.unlockFocus()
-        image.size = NSSize(width: pointSize, height: pointSize)
-        image.isTemplate = isMonochrome
-        return image
-    }
-
-    private var ringTrim: CGFloat {
+    private var ringTrim: CGFloat? {
         guard let percentage else {
-            return 0
+            return nil
         }
         return CGFloat(max(0, min(percentage, 100))) / 100
     }
 
-    private var ringNSColor: NSColor {
+    private var ringColor: Color {
         if isStale {
             return .gray
         }
@@ -84,11 +54,11 @@ struct MenuBarIcon: View {
             return .gray
         }
         if percentage < 20 {
-            return .systemRed
+            return .red
         }
         if percentage < 50 {
-            return .systemYellow
+            return .yellow
         }
-        return .systemGreen
+        return .green
     }
 }
