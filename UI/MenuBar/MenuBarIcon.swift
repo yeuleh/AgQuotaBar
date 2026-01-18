@@ -7,17 +7,17 @@ struct MenuBarIcon: View {
     let showPercentage: Bool
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             Image(nsImage: renderRingImage())
 
             if showPercentage {
                 if let percentage {
                     Text("\(percentage)%")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                 } else {
                     Text("--")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -27,7 +27,7 @@ struct MenuBarIcon: View {
     private func renderRingImage() -> NSImage {
         let pointSize: CGFloat = 22
         let ringDiameter: CGFloat = 14
-        let lineWidth: CGFloat = 2
+        let lineWidth: CGFloat = 2.5
         let scale: CGFloat = 2
         let pixelSize = NSSize(width: pointSize * scale, height: pointSize * scale)
         let image = NSImage(size: pixelSize)
@@ -43,7 +43,7 @@ struct MenuBarIcon: View {
             height: ringDiameter - lineWidth
         )
         let backgroundPath = NSBezierPath(ovalIn: ringRect)
-        NSColor.labelColor.withAlphaComponent(0.2).setStroke()
+        NSColor.labelColor.withAlphaComponent(0.25).setStroke()
         backgroundPath.lineWidth = lineWidth
         backgroundPath.stroke()
 

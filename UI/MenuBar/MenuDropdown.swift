@@ -112,20 +112,20 @@ struct MenuDropdown: View {
                 Button {
                     appState.selectRemoteModel(model)
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         if appState.selectedModelId == model.id {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.blue)
                         } else {
                             Image(systemName: "circle")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                         }
                         Text(model.displayName)
                             .lineLimit(1)
                             .truncationMode(.tail)
                         QuotaRing(percentage: Double(model.remainingPercentage))
-                        Text("\(model.usedPercentage)%")
-                            .font(.system(size: 11, weight: .medium))
+                        Text("\(model.remainingPercentage)%")
+                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
                             .monospacedDigit()
                             .layoutPriority(1)
                             .foregroundStyle(quotaColor(for: model.remainingPercentage))
@@ -149,17 +149,17 @@ struct MenuDropdown: View {
                     .foregroundStyle(.secondary)
 
                 ForEach(group.models, id: \.id) { model in
-                    let percentageText = model.usedPercentage.map { "\($0)%" } ?? "--"
+                    let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
                     Button {
                         appState.selectModel(model, accountId: group.account.id)
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             if appState.selectedModelId == model.id {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(.blue)
                             } else {
                                 Image(systemName: "circle")
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(.tertiary)
                             }
                             Text(model.name)
                                 .lineLimit(1)
@@ -168,7 +168,7 @@ struct MenuDropdown: View {
                                 QuotaRing(percentage: Double(remaining))
                             }
                             Text(percentageText)
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.system(size: 11, weight: .semibold, design: .monospaced))
                                 .monospacedDigit()
                                 .layoutPriority(1)
                                 .foregroundStyle(model.remainingPercentage.map { quotaColor(for: $0) } ?? .secondary)
@@ -180,7 +180,64 @@ struct MenuDropdown: View {
     }
     
     private func quotaColor(for percentage: Int) -> Color {
-        if percentage >= 50 {
+        if percentage >= 70 {
+            return .green
+        } else if percentage >= 30 {
+            return .yellow
+        } else if percentage > 0 {
+            return .red
+        } else {
+            return .gray
+        }
+    }
+}
+
+struct MenuModelRowView: View {
+    let isSelected: Bool
+    let name: String
+    let remainingPercentage: Int?
+    let usedPercentageText: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if isSelected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.blue)
+            } else {
+                Image(systemName: "circle")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
+            }
+
+            Text(name)
+                .font(.system(size: 13, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .foregroundStyle(.primary)
+            
+            Spacer()
+
+            if let remaining = remainingPercentage {
+                QuotaRing(percentage: Double(remaining))
+            }
+
+            Text(remainingPercentage.map { "\($0)%" } ?? "--")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                .monospacedDigit()
+                .layoutPriority(1)
+                .foregroundStyle(quotaColor)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 3)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityValue(usedPercentageText)
+    }
+    
+    private var quotaColor: Color {
+        guard let percentage = remainingPercentage else { return .secondary }
+        if percentage >= 70 {
             return .green
         } else if percentage >= 30 {
             return .yellow
@@ -205,7 +262,7 @@ private struct QuotaRing: View {
     
     private func renderRing() -> NSImage {
         let size: CGFloat = 14
-        let lineWidth: CGFloat = 2
+        let lineWidth: CGFloat = 2.5
         let scale: CGFloat = 2
         let pixelSize = NSSize(width: size * scale, height: size * scale)
         let image = NSImage(size: pixelSize)
@@ -218,7 +275,7 @@ private struct QuotaRing: View {
             let rect = CGRect(x: lineWidth/2, y: lineWidth/2, width: size - lineWidth, height: size - lineWidth)
             let bgPath = NSBezierPath(ovalIn: rect)
             bgPath.lineWidth = lineWidth
-            NSColor.labelColor.withAlphaComponent(0.2).setStroke()
+            NSColor.labelColor.withAlphaComponent(0.25).setStroke()
             bgPath.stroke()
             
             // Foreground
@@ -233,7 +290,7 @@ private struct QuotaRing: View {
                 path.appendArc(withCenter: center, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: true)
                 
                 let nsColor: NSColor
-                if percentage >= 50 { nsColor = .systemGreen }
+                if percentage >= 70 { nsColor = .systemGreen }
                 else if percentage >= 30 { nsColor = .systemYellow }
                 else if percentage > 0 { nsColor = .systemRed }
                 else { nsColor = .systemGray }
