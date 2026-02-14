@@ -48,6 +48,32 @@ struct MenuDropdown: View {
             metadataChip(title: L10n.Menu.account, value: snapshot.account ?? L10n.Menu.notConnected)
             metadataChip(title: L10n.Menu.plan, value: snapshot.plan ?? L10n.Menu.unknownPlan)
             Spacer()
+
+            if appState.selectedServiceTab == .antigravity && appState.quotaMode == .remote {
+                if appState.oauthService.isAuthenticated {
+                    Button {
+                        appState.logout()
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n.Antigravity.logout)
+                } else {
+                    Button {
+                        Task {
+                            _ = await appState.login()
+                        }
+                    } label: {
+                        Image(systemName: "person.badge.key")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.blue)
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n.Menu.loginWithGoogle)
+                }
+            }
         }
     }
 
