@@ -184,32 +184,25 @@ struct MenuDropdown: View {
 
     private func quotaWindowCard(
         _ window: ServiceQuotaWindow,
-        actionTitle: String? = nil,
-        actionEnabled: Bool = true,
-        action: (() -> Void)? = nil
+        isPinned: Bool = false,
+        pinAction: (() -> Void)? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                if let pinAction {
+                    Button(action: pinAction) {
+                        Image(systemName: isPinned ? "star.fill" : "star")
+                            .font(.system(size: 14))
+                            .foregroundStyle(isPinned ? Color.yellow : Color.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isPinned)
+                }
+
                 Text(window.title)
                     .font(.system(size: 18, weight: .semibold))
 
                 Spacer()
-
-                if let actionTitle, let action {
-                    Button(action: action) {
-                        Text(actionTitle)
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .foregroundStyle(actionEnabled ? Color.white : Color.secondary)
-                            .background(
-                                Capsule(style: .continuous)
-                                    .fill(actionEnabled ? Color.accentColor : Color.gray.opacity(0.35))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(actionEnabled == false)
-                }
 
                 if let resetText = window.resetText {
                     Text(resetText)
@@ -246,9 +239,9 @@ struct MenuDropdown: View {
         let isShowing = appState.isMenuBarShowingGroup(group)
 
         return VStack(alignment: .leading, spacing: 10) {
-            quotaWindowCard(group.window, actionTitle: L10n.Menu.show, actionEnabled: isShowing == false) {
+            quotaWindowCard(group.window, isPinned: isShowing, pinAction: {
                 appState.displayGroupUsageInMenuBar(group)
-            }
+            })
 
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(group.models) { model in
