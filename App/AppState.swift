@@ -32,6 +32,7 @@ private enum PreferenceKey {
     static let accounts = "accounts"
     static let defaultAccountId = "defaultAccountId"
     static let quotaMode = "quotaMode"
+    static let selectedServiceTab = "selectedServiceTab"
 }
 
 
@@ -39,6 +40,11 @@ private enum PreferenceKey {
 struct StoredAccount: Identifiable, Codable, Hashable {
     let id: String
     let email: String
+}
+
+private struct IconDisplayOverride: Hashable {
+    let percentage: Int
+    let metric: IconDisplayMetric
 }
 
 @MainActor
@@ -118,10 +124,23 @@ final class AppState: ObservableObject {
             }
         }
     }
+
+    @Published var selectedServiceTab: ServiceTab {
+        didSet {
+            if oldValue != selectedServiceTab {
+                UserDefaults.standard.set(selectedServiceTab.rawValue, forKey: PreferenceKey.selectedServiceTab)
+            }
+        }
+    }
     
     @Published var remoteModels: [RemoteModelQuota] = []
     @Published var remoteUserEmail: String?
     @Published var remoteTier: String?
+    @Published private(set) var localPlanName: String?
+    @Published private(set) var lastAntigravityUpdatedAt: Date?
+    @Published private var iconDisplayOverride: IconDisplayOverride?
+    @Published private(set) var codexSnapshot: ServicePanelSnapshot
+    @Published private(set) var glmSnapshot: ServicePanelSnapshot
 
     @AppStorage("hasLaunchedBefore") private var hasLaunchedBefore: Bool = false
 
@@ -150,6 +169,16 @@ final class AppState: ObservableObject {
         
         let modeRaw = defaults.string(forKey: PreferenceKey.quotaMode) ?? QuotaMode.local.rawValue
         quotaMode = QuotaMode(rawValue: modeRaw) ?? .local
+
+        let selectedServiceTabRaw = defaults.string(forKey: PreferenceKey.selectedServiceTab) ?? ServiceTab.antigravity.rawValue
+        selectedServiceTab = ServiceTab(rawValue: selectedServiceTabRaw) ?? .antigravity
+
+        let now = Date()
+        localPlanName = nil
+        lastAntigravityUpdatedAt = nil
+        iconDisplayOverride = nil
+        codexSnapshot = .codexPlaceholder(updatedAt: now)
+        glmSnapshot = .glmPlaceholder(updatedAt: now)
         
         accounts = storedAccounts.map { Account(id: $0.id, email: $0.email, models: []) }
 
@@ -160,9 +189,29 @@ final class AppState: ObservableObject {
         startPolling()
     }
 
+    var selectedServiceSnapshot: ServicePanelSnapshot {
+        switch selectedServiceTab {
+        case .codex:
+            return codexSnapshot
+        case .antigravity:
+            return antigravitySnapshot
+        case .glm:
+            return glmSnapshot
+        }
+    }
+
     var selectedDisplayPercentage: Int? {
         guard isStale == false else {
             return nil
+        }
+
+        if let iconDisplayOverride {
+            switch iconDisplayOverride.metric {
+            case .remaining:
+                return iconDisplayOverride.percentage
+            case .used:
+                return max(0, min(100, 100 - iconDisplayOverride.percentage))
+            }
         }
         
         if quotaMode == .remote {
@@ -327,6 +376,29 @@ final class AppState: ObservableObject {
             await refreshLocal()
         }
     }
+
+    func refreshSelectedService() async {
+        switch selectedServiceTab {
+        case .antigravity:
+            await refreshNow()
+        case .codex:
+            refreshCodexSnapshot()
+        case .glm:
+            refreshGLMSnapshot()
+        }
+    }
+
+    func displayGroupUsageInMenuBar(_ group: ServiceUsageGroup) {
+        displayUsageInMenuBar(usedPercentage: group.window.usedPercent)
+    }
+
+    private func displayUsageInMenuBar(usedPercentage: Int?) {
+        guard let usedPercentage else {
+            return
+        }
+        let clamped = min(100, max(0, usedPercentage))
+        iconDisplayOverride = IconDisplayOverride(percentage: clamped, metric: .used)
+    }
     
     private func refreshLocal() async {
         do {
@@ -363,6 +435,7 @@ final class AppState: ObservableObject {
         remoteModels = snapshot.models
         remoteUserEmail = snapshot.userEmail
         remoteTier = snapshot.tier
+        lastAntigravityUpdatedAt = snapshot.timestamp
         isStale = false
         
         if selectedModelId == nil || remoteModels.contains(where: { $0.id == selectedModelId }) == false {
@@ -383,6 +456,7 @@ final class AppState: ObservableObject {
         remoteModels = []
         remoteUserEmail = nil
         remoteTier = nil
+        lastAntigravityUpdatedAt = nil
         isStale = true
     }
 
@@ -546,6 +620,8 @@ final class AppState: ObservableObject {
 
     private func apply(snapshot: QuotaSnapshot) {
         rebuildAccounts(snapshot: snapshot)
+        localPlanName = snapshot.planName
+        lastAntigravityUpdatedAt = snapshot.timestamp
         let availableModels = accounts.flatMap { $0.models }
         if selectedModelId == nil || availableModels.contains(where: { $0.id == selectedModelId }) == false {
             selectedModelId = availableModels.first?.id
@@ -558,6 +634,151 @@ final class AppState: ObservableObject {
 
     private func markStale() {
         isStale = true
+    }
+
+    private func refreshCodexSnapshot() {
+        codexSnapshot = .codexPlaceholder(updatedAt: Date())
+    }
+
+    private func refreshGLMSnapshot() {
+        glmSnapshot = .glmPlaceholder(updatedAt: Date())
+    }
+
+    private var antigravitySnapshot: ServicePanelSnapshot {
+        if quotaMode == .remote && oauthService.isAuthenticated == false {
+            return ServicePanelSnapshot(
+                service: .antigravity,
+                state: .needsAuth,
+                updatedAt: nil,
+                account: antigravityAccountText,
+                plan: antigravityPlanText,
+                windows: [],
+                groups: [],
+                notes: ["Sign in with Google to load remote quota."]
+            )
+        }
+
+        let models: [(id: String, name: String, remaining: Int?, reset: Date?)]
+        if quotaMode == .remote {
+            models = remoteModels.map { model in
+                (id: model.id, name: model.displayName, remaining: model.remainingPercentage, reset: model.resetTime)
+            }
+        } else {
+            models = visibleDisplayModels.map { item in
+                (id: item.model.id, name: item.model.name, remaining: item.model.remainingPercentage, reset: item.model.resetTime)
+            }
+        }
+
+        if models.isEmpty {
+            let state: ServicePanelState = isStale ? .stale : .empty
+            return ServicePanelSnapshot(
+                service: .antigravity,
+                state: state,
+                updatedAt: nil,
+                account: antigravityAccountText,
+                plan: antigravityPlanText,
+                windows: [],
+                groups: [],
+                notes: ["No model quota data available."]
+            )
+        }
+
+        let grouped = Dictionary(grouping: models) { model in
+            AppState.antigravityGroupName(for: model.name)
+        }
+
+        let groups = grouped.keys.sorted().map { groupName in
+            let groupModels = grouped[groupName, default: []]
+            let usageItems: [ServiceModelUsage] = groupModels.map { model in
+                let used = model.remaining.map { max(0, min(100, 100 - $0)) }
+                return ServiceModelUsage(
+                    id: model.id,
+                    name: model.name,
+                    usedPercent: used,
+                    detail: used.map { "\($0)% used" }
+                )
+            }
+
+            let usedPercentValues = usageItems.compactMap(\.usedPercent)
+            let averageUsed = usedPercentValues.isEmpty ? nil : usedPercentValues.reduce(0, +) / usedPercentValues.count
+            let earliestReset = groupModels.compactMap(\.reset).min()
+
+            let window = ServiceQuotaWindow(
+                id: "antigravity-group-\(groupName.lowercased())",
+                title: groupName,
+                usedPercent: averageUsed,
+                detail: "\(groupModels.count) models",
+                resetText: earliestReset.map { Self.relativeResetText(from: $0) }
+            )
+
+            return ServiceUsageGroup(
+                id: window.id,
+                title: groupName,
+                window: window,
+                models: usageItems.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            )
+        }
+
+        return ServicePanelSnapshot(
+            service: .antigravity,
+            state: isStale ? .stale : .ready,
+            updatedAt: lastAntigravityUpdatedAt,
+            account: antigravityAccountText,
+            plan: antigravityPlanText,
+            windows: [],
+            groups: groups,
+            notes: []
+        )
+    }
+
+    private var antigravityAccountText: String? {
+        if quotaMode == .remote {
+            return remoteUserEmail
+        }
+        return accounts.first(where: { $0.id == "local" })?.email
+    }
+
+    private var antigravityPlanText: String? {
+        if quotaMode == .remote {
+            return remoteTier
+        }
+        return localPlanName
+    }
+
+    private static func antigravityGroupName(for modelName: String) -> String {
+        let lowercased = modelName.lowercased()
+        if lowercased.contains("claude") {
+            return "Claude"
+        }
+        if lowercased.contains("gemini") {
+            return "Gemini"
+        }
+        if lowercased.contains("gpt") {
+            return "GPT"
+        }
+        return "Other"
+    }
+
+    private static func relativeResetText(from date: Date) -> String {
+        let interval = max(0, Int(date.timeIntervalSinceNow))
+        let day = 24 * 60 * 60
+        let hour = 60 * 60
+        let minute = 60
+
+        if interval >= day {
+            let days = interval / day
+            let hours = (interval % day) / hour
+            return "Resets in \(days)d \(hours)h"
+        }
+
+        if interval >= hour {
+            let hours = interval / hour
+            let minutes = (interval % hour) / minute
+            return "Resets in \(hours)h \(minutes)m"
+        }
+
+        let minutes = max(1, interval / minute)
+        return "Resets in \(minutes)m"
     }
 
     private func startPolling() {

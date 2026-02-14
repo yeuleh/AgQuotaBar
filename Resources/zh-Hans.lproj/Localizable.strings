@@ -30,6 +30,22 @@
 "menu.notLoggedIn" = "未登录";
 "menu.loginWithGoogle" = "使用 Google 登录";
 "menu.noModelsConfigured" = "未配置模型";
+"menu.tabCodex" = "Codex";
+"menu.tabAntigravity" = "Antigravity";
+"menu.tabGLM" = "GLM";
+"menu.loading" = "加载中...";
+"menu.noData" = "暂无数据。";
+"menu.staleData" = "数据已过期，当前显示缓存数据。";
+"menu.connectAccountHint" = "请先连接账号以加载配额数据。";
+"menu.account" = "账号";
+"menu.plan" = "套餐";
+"menu.notConnected" = "未连接";
+"menu.unknownPlan" = "未知";
+"menu.show" = "显示";
+"menu.updatedJustNow" = "刚刚更新";
+"menu.updatedSeconds" = "%d 秒前更新";
+"menu.updatedMinutes" = "%d 分钟前更新";
+"menu.updatedHours" = "%d 小时前更新";
 
 /* Antigravity Settings */
 "antigravity.mode" = "模式";

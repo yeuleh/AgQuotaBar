@@ -30,6 +30,22 @@
 "menu.notLoggedIn" = "Not logged in";
 "menu.loginWithGoogle" = "Login with Google";
 "menu.noModelsConfigured" = "No models configured";
+"menu.tabCodex" = "Codex";
+"menu.tabAntigravity" = "Antigravity";
+"menu.tabGLM" = "GLM";
+"menu.loading" = "Loading...";
+"menu.noData" = "No data available.";
+"menu.staleData" = "Data is stale, showing cached values.";
+"menu.connectAccountHint" = "Connect your account to load quota data.";
+"menu.account" = "Account";
+"menu.plan" = "Plan";
+"menu.notConnected" = "Not connected";
+"menu.unknownPlan" = "Unknown";
+"menu.show" = "Show";
+"menu.updatedJustNow" = "Updated just now";
+"menu.updatedSeconds" = "Updated %d seconds ago";
+"menu.updatedMinutes" = "Updated %d minutes ago";
+"menu.updatedHours" = "Updated %d hours ago";
 
 /* Antigravity Settings */
 "antigravity.mode" = "Mode";

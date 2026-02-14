@@ -1,64 +1,343 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 struct MenuDropdown: View {
     @ObservedObject var appState: AppState
     @ObservedObject private var l10n = LocalizationManager.shared
 
-    private var groupedDisplayModels: [(account: Account, models: [QuotaModel])] {
-        let sliced = appState.visibleDisplayModels.prefix(7)
-        var result: [(account: Account, models: [QuotaModel])] = []
-        for item in sliced {
-            if var last = result.last, last.account.id == item.account.id {
-                last.models.append(item.model)
-                result[result.count - 1] = last
-            } else {
-                result.append((account: item.account, models: [item.model]))
-            }
-        }
-        return result.map { group in
-            let sortedModels = group.models.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-            return (account: group.account, models: sortedModels)
-        }
-    }
-    
-    private var visibleRemoteModelsSliced: [RemoteModelQuota] {
-        let sliced = appState.visibleRemoteModels.prefix(7)
-        return sliced.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
-    }
-
     var body: some View {
-        Group {
-            Text(L10n.Menu.models)
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
+        VStack(spacing: 12) {
+            serviceTabs
 
-            if appState.quotaMode == .remote {
-                remoteModelsSection
-            } else {
-                localModelsSection
+            Divider()
+
+            ScrollView {
+                VStack(spacing: 12) {
+                    snapshotHeader
+                    snapshotMeta
+
+                    if appState.selectedServiceTab == .antigravity {
+                        antigravitySourceSwitch
+                    }
+
+                    snapshotBody(appState.selectedServiceSnapshot)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             Divider()
 
-            Picker(L10n.Menu.updateInterval, selection: $appState.pollingInterval) {
-                Text(L10n.Menu.interval30s).tag(30.0)
-                Text(L10n.Menu.interval2m).tag(120.0)
-                Text(L10n.Menu.interval1h).tag(3600.0)
+            bottomActions
+        }
+        .padding(12)
+        .frame(width: 420, height: 560)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(NSColor.windowBackgroundColor),
+                    Color(NSColor.controlBackgroundColor).opacity(0.92)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .id(l10n.refreshId)
+    }
+
+    private var snapshotMeta: some View {
+        let snapshot = appState.selectedServiceSnapshot
+        return HStack(spacing: 8) {
+            metadataChip(title: L10n.Menu.account, value: snapshot.account ?? L10n.Menu.notConnected)
+            metadataChip(title: L10n.Menu.plan, value: snapshot.plan ?? L10n.Menu.unknownPlan)
+            Spacer()
+        }
+    }
+
+    private func metadataChip(title: String, value: String) -> some View {
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule(style: .continuous)
+                .fill(Color.primary.opacity(0.08))
+        )
+    }
+
+    private var serviceTabs: some View {
+        HStack(spacing: 8) {
+            ForEach(ServiceTab.allCases) { tab in
+                Button {
+                    appState.selectedServiceTab = tab
+                } label: {
+                    Text(title(for: tab))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(appState.selectedServiceTab == tab ? .white : .primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(appState.selectedServiceTab == tab ? Color.accentColor : Color.primary.opacity(0.08))
+                        )
+                }
+                .buttonStyle(.plain)
             }
+        }
+    }
+
+    private var snapshotHeader: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title(for: appState.selectedServiceTab))
+                .font(.system(size: 22, weight: .medium, design: .rounded))
+
+            Spacer()
+
+            if let updatedAt = appState.selectedServiceSnapshot.updatedAt {
+                Text(relativeUpdatedText(from: updatedAt))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("--")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var antigravitySourceSwitch: some View {
+        HStack(spacing: 8) {
+            sourceChip(title: L10n.Antigravity.localMode, mode: .local)
+            sourceChip(title: L10n.Antigravity.remoteMode, mode: .remote)
+            Spacer()
+        }
+    }
+
+    private func sourceChip(title: String, mode: QuotaMode) -> some View {
+        Button {
+            appState.quotaMode = mode
+            Task {
+                await appState.refreshNow()
+            }
+        } label: {
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(appState.quotaMode == mode ? .white : .primary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(appState.quotaMode == mode ? Color.accentColor : Color.primary.opacity(0.08))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func snapshotBody(_ snapshot: ServicePanelSnapshot) -> some View {
+        switch snapshot.state {
+        case .loading:
+            loadingCard
+        case .needsAuth:
+            needsAuthCard
+        case .empty:
+            messageCard(text: L10n.Menu.noData)
+        case .stale:
+            messageCard(text: L10n.Menu.staleData)
+            readyContent(snapshot)
+        case .failed(let message):
+            messageCard(text: message)
+        case .ready:
+            readyContent(snapshot)
+        }
+    }
+
+    @ViewBuilder
+    private func readyContent(_ snapshot: ServicePanelSnapshot) -> some View {
+        if snapshot.windows.isEmpty == false {
+            ForEach(snapshot.windows) { window in
+                quotaWindowCard(window)
+            }
+        }
+
+        if snapshot.groups.isEmpty == false {
+            ForEach(snapshot.groups) { group in
+                quotaGroupCard(group)
+            }
+        }
+
+        if snapshot.notes.isEmpty == false {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(snapshot.notes, id: \.self) { note in
+                    Text(note)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.05))
+            )
+        }
+    }
+
+    private func quotaWindowCard(_ window: ServiceQuotaWindow, actionTitle: String? = nil, action: (() -> Void)? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(window.title)
+                    .font(.system(size: 18, weight: .semibold))
+
+                Spacer()
+
+                if let actionTitle, let action {
+                    Button(actionTitle, action: action)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                }
+
+                if let resetText = window.resetText {
+                    Text(resetText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let usedPercent = window.usedPercent {
+                UsageProgressBar(usedPercent: usedPercent)
+                Text("\(usedPercent)% used")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(usageColor(for: usedPercent))
+            }
+
+            if let detail = window.detail {
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.primary.opacity(0.05))
+        )
+    }
+
+    private func quotaGroupCard(_ group: ServiceUsageGroup) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            quotaWindowCard(group.window, actionTitle: L10n.Menu.show) {
+                appState.displayGroupUsageInMenuBar(group)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(group.models) { model in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(usageColor(for: model.usedPercent ?? 0).opacity(0.9))
+                            .frame(width: 8, height: 8)
+
+                        Text(model.name)
+                            .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+
+                        Spacer()
+
+                        Text(model.detail ?? "--")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+
+    private var loadingCard: some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.small)
+            Text(L10n.Menu.loading)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color.primary.opacity(0.05))
+        )
+    }
+
+    private var needsAuthCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(L10n.Menu.notLoggedIn)
+                .font(.headline)
+            Text(L10n.Menu.connectAccountHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             Button {
                 Task {
-                    await appState.refreshNow()
+                    _ = await appState.login()
+                }
+            } label: {
+                Label(L10n.Menu.loginWithGoogle, systemImage: "person.badge.key")
+            }
+            .buttonStyle(.borderedProminent)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.orange.opacity(0.12))
+        )
+    }
+
+    private func messageCard(text: String) -> some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.primary.opacity(0.05))
+            )
+    }
+
+    private var bottomActions: some View {
+        HStack(spacing: 8) {
+            Button {
+                Task {
+                    await appState.refreshSelectedService()
                 }
             } label: {
                 Label(L10n.Menu.refreshNow, systemImage: "arrow.clockwise")
             }
-            .keyboardShortcut("r", modifiers: .command)
 
-            Divider()
+            Menu {
+                Button(L10n.Menu.interval30s) { appState.pollingInterval = 30 }
+                Button(L10n.Menu.interval2m) { appState.pollingInterval = 120 }
+                Button(L10n.Menu.interval1h) { appState.pollingInterval = 3600 }
+            } label: {
+                Label(L10n.Menu.updateInterval, systemImage: "clock")
+            }
 
-            SettingsLink {
+            Spacer()
+
+            Button {
+                appState.openSettingsWindow()
+            } label: {
                 Label(L10n.Menu.settings, systemImage: "gearshape")
             }
 
@@ -67,197 +346,63 @@ struct MenuDropdown: View {
             } label: {
                 Label(L10n.Menu.quit, systemImage: "power")
             }
-            .keyboardShortcut("q", modifiers: .command)
         }
-        .id(l10n.refreshId)
+        .buttonStyle(.bordered)
+        .controlSize(.small)
     }
-    
-    @ViewBuilder
-    private var remoteModelsSection: some View {
-        let models = visibleRemoteModelsSliced
-        if models.isEmpty {
-            if appState.oauthService.isAuthenticated {
-                Text(L10n.Menu.noModels)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(L10n.Menu.notLoggedIn)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                Button {
-                    Task {
-                        _ = await appState.login()
-                    }
-                } label: {
-                    Label(L10n.Menu.loginWithGoogle, systemImage: "person.badge.key")
-                }
-            }
-        } else {
-            if let email = appState.remoteUserEmail {
-                Label(email, systemImage: "person.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            ForEach(models) { model in
-                Button {
-                    appState.selectRemoteModel(model)
-                } label: {
-                    HStack(spacing: 10) {
-                        if appState.selectedModelId == model.id {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.blue)
-                        } else {
-                            Image(systemName: "circle")
-                                .foregroundStyle(.tertiary)
-                        }
-                        Text(model.displayName)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                        QuotaRing(percentage: Double(model.remainingPercentage))
-                        Text("\(model.remainingPercentage)%")
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .monospacedDigit()
-                            .layoutPriority(1)
-                            .foregroundStyle(quotaColor(for: model.remainingPercentage))
-                    }
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var localModelsSection: some View {
-        let groups = groupedDisplayModels
-        if groups.isEmpty {
-            Text(L10n.Menu.noModelsConfigured)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        } else {
-            ForEach(groups, id: \.account.id) { group in
-                Label(group.account.email, systemImage: "person.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
 
-                ForEach(group.models, id: \.id) { model in
-                    let percentageText = model.remainingPercentage.map { "\($0)%" } ?? "--"
-                    Button {
-                        appState.selectModel(model, accountId: group.account.id)
-                    } label: {
-                        HStack(spacing: 10) {
-                            if appState.selectedModelId == model.id {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundStyle(.blue)
-                            } else {
-                                Image(systemName: "circle")
-                                    .foregroundStyle(.tertiary)
-                            }
-                            Text(model.name)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                            if let remaining = model.remainingPercentage {
-                                QuotaRing(percentage: Double(remaining))
-                            }
-                            Text(percentageText)
-                                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                                .monospacedDigit()
-                                .layoutPriority(1)
-                                .foregroundStyle(model.remainingPercentage.map { quotaColor(for: $0) } ?? .secondary)
-                        }
-                    }
-                }
-            }
+    private func title(for tab: ServiceTab) -> String {
+        switch tab {
+        case .codex:
+            return L10n.Menu.tabCodex
+        case .antigravity:
+            return L10n.Menu.tabAntigravity
+        case .glm:
+            return L10n.Menu.tabGLM
         }
     }
-    
-    private func quotaColor(for percentage: Int) -> Color {
-        if percentage >= 70 {
-            return .green
-        } else if percentage >= 30 {
-            return .yellow
-        } else if percentage > 0 {
-            return .red
-        } else {
-            return .gray
+
+    private func usageColor(for usedPercent: Int) -> Color {
+        _ = usedPercent
+        return .secondary
+    }
+
+    private func relativeUpdatedText(from date: Date) -> String {
+        let delta = max(0, Int(Date().timeIntervalSince(date)))
+        if delta < 10 {
+            return L10n.Menu.updatedJustNow
         }
+        if delta < 60 {
+            return L10n.Menu.updatedSeconds(delta)
+        }
+        if delta < 3600 {
+            return L10n.Menu.updatedMinutes(delta / 60)
+        }
+        return L10n.Menu.updatedHours(delta / 3600)
     }
 }
 
-struct MenuModelRowView: View {
-    let isSelected: Bool
-    let name: String
-    let remainingPercentage: Int?
-    let usedPercentageText: String
+private struct UsageProgressBar: View {
+    let usedPercent: Int
 
     var body: some View {
-        HStack(spacing: 12) {
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.blue)
-            } else {
-                Image(systemName: "circle")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.tertiary)
+        GeometryReader { proxy in
+            let width = max(0, proxy.size.width * CGFloat(clampedPercent) / 100)
+
+            ZStack(alignment: .leading) {
+                Capsule(style: .continuous)
+                    .fill(Color.green.opacity(0.65))
+
+                Capsule(style: .continuous)
+                    .fill(Color.primary.opacity(0.3))
+                    .frame(width: width)
             }
-
-            Text(name)
-                .font(.system(size: 13, weight: .medium))
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .foregroundStyle(.primary)
-            
-            Spacer()
-
-            if let remaining = remainingPercentage {
-                QuotaRing(percentage: Double(remaining))
-            }
-
-            Text(remainingPercentage.map { "\($0)%" } ?? "--")
-                .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                .monospacedDigit()
-                .layoutPriority(1)
-                .foregroundStyle(quotaColor)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 3)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(name)
-        .accessibilityValue(usedPercentageText)
-    }
-    
-    private var quotaColor: Color {
-        guard let percentage = remainingPercentage else { return .secondary }
-        if percentage >= 70 {
-            return .green
-        } else if percentage >= 30 {
-            return .yellow
-        } else if percentage > 0 {
-            return .red
-        } else {
-            return .gray
-        }
-    }
-}
-
-private struct QuotaRing: View {
-    let percentage: Double
-
-    var body: some View {
-        GravityArc(
-            percentage: percentage,
-            ringColor: ringColor,
-            trackColor: Color.primary.opacity(0.25),
-            lineWidth: 2.5
-        )
-        .frame(width: 14, height: 14)
+        .frame(height: 10)
     }
 
-    private var ringColor: Color {
-        if percentage >= 70 { return .green }
-        else if percentage >= 30 { return .yellow }
-        else if percentage > 0 { return .red }
-        else { return .gray }
+    private var clampedPercent: Int {
+        min(100, max(0, usedPercent))
     }
+
 }

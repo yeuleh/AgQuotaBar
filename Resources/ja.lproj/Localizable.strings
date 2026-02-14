@@ -30,6 +30,22 @@
 "menu.notLoggedIn" = "未ログイン";
 "menu.loginWithGoogle" = "Google でログイン";
 "menu.noModelsConfigured" = "モデルが設定されていません";
+"menu.tabCodex" = "Codex";
+"menu.tabAntigravity" = "Antigravity";
+"menu.tabGLM" = "GLM";
+"menu.loading" = "読み込み中...";
+"menu.noData" = "利用可能なデータがありません。";
+"menu.staleData" = "データが古いため、キャッシュを表示しています。";
+"menu.connectAccountHint" = "クォータを表示するにはアカウントを接続してください。";
+"menu.account" = "アカウント";
+"menu.plan" = "プラン";
+"menu.notConnected" = "未接続";
+"menu.unknownPlan" = "不明";
+"menu.show" = "表示";
+"menu.updatedJustNow" = "たった今更新";
+"menu.updatedSeconds" = "%d 秒前に更新";
+"menu.updatedMinutes" = "%d 分前に更新";
+"menu.updatedHours" = "%d 時間前に更新";
 
 /* Antigravity Settings */
 "antigravity.mode" = "モード";

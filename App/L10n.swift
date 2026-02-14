@@ -41,6 +41,28 @@ enum L10n {
         static var notLoggedIn: String { "menu.notLoggedIn".localized }
         static var loginWithGoogle: String { "menu.loginWithGoogle".localized }
         static var noModelsConfigured: String { "menu.noModelsConfigured".localized }
+        static var tabCodex: String { "menu.tabCodex".localized }
+        static var tabAntigravity: String { "menu.tabAntigravity".localized }
+        static var tabGLM: String { "menu.tabGLM".localized }
+        static var loading: String { "menu.loading".localized }
+        static var noData: String { "menu.noData".localized }
+        static var staleData: String { "menu.staleData".localized }
+        static var connectAccountHint: String { "menu.connectAccountHint".localized }
+        static var account: String { "menu.account".localized }
+        static var plan: String { "menu.plan".localized }
+        static var notConnected: String { "menu.notConnected".localized }
+        static var unknownPlan: String { "menu.unknownPlan".localized }
+        static var show: String { "menu.show".localized }
+        static var updatedJustNow: String { "menu.updatedJustNow".localized }
+        static func updatedSeconds(_ seconds: Int) -> String {
+            "menu.updatedSeconds".localized(seconds)
+        }
+        static func updatedMinutes(_ minutes: Int) -> String {
+            "menu.updatedMinutes".localized(minutes)
+        }
+        static func updatedHours(_ hours: Int) -> String {
+            "menu.updatedHours".localized(hours)
+        }
     }
     
     enum Antigravity {
