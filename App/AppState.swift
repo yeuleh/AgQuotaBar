@@ -33,6 +33,7 @@ private enum PreferenceKey {
     static let defaultAccountId = "defaultAccountId"
     static let quotaMode = "quotaMode"
     static let selectedServiceTab = "selectedServiceTab"
+    static let displayedGroupId = "displayedGroupId"
 }
 
 
@@ -45,6 +46,7 @@ struct StoredAccount: Identifiable, Codable, Hashable {
 private struct IconDisplayOverride: Hashable {
     let percentage: Int
     let metric: IconDisplayMetric
+    let sourceGroupId: String?
 }
 
 @MainActor
@@ -138,6 +140,13 @@ final class AppState: ObservableObject {
     @Published var remoteTier: String?
     @Published private(set) var localPlanName: String?
     @Published private(set) var lastAntigravityUpdatedAt: Date?
+    @Published private var displayedGroupId: String? {
+        didSet {
+            if oldValue != displayedGroupId {
+                UserDefaults.standard.set(displayedGroupId, forKey: PreferenceKey.displayedGroupId)
+            }
+        }
+    }
     @Published private var iconDisplayOverride: IconDisplayOverride?
     @Published private(set) var codexSnapshot: ServicePanelSnapshot
     @Published private(set) var glmSnapshot: ServicePanelSnapshot
@@ -176,6 +185,7 @@ final class AppState: ObservableObject {
         let now = Date()
         localPlanName = nil
         lastAntigravityUpdatedAt = nil
+        displayedGroupId = defaults.string(forKey: PreferenceKey.displayedGroupId)
         iconDisplayOverride = nil
         codexSnapshot = .codexPlaceholder(updatedAt: now)
         glmSnapshot = .glmPlaceholder(updatedAt: now)
@@ -389,15 +399,22 @@ final class AppState: ObservableObject {
     }
 
     func displayGroupUsageInMenuBar(_ group: ServiceUsageGroup) {
-        displayUsageInMenuBar(usedPercentage: group.window.usedPercent)
+        if displayUsageInMenuBar(usedPercentage: group.window.usedPercent, sourceGroupId: group.id) {
+            displayedGroupId = group.id
+        }
     }
 
-    private func displayUsageInMenuBar(usedPercentage: Int?) {
+    func isMenuBarShowingGroup(_ group: ServiceUsageGroup) -> Bool {
+        iconDisplayOverride?.sourceGroupId == group.id
+    }
+
+    private func displayUsageInMenuBar(usedPercentage: Int?, sourceGroupId: String?) -> Bool {
         guard let usedPercentage else {
-            return
+            return false
         }
         let clamped = min(100, max(0, usedPercentage))
-        iconDisplayOverride = IconDisplayOverride(percentage: clamped, metric: .used)
+        iconDisplayOverride = IconDisplayOverride(percentage: clamped, metric: .used, sourceGroupId: sourceGroupId)
+        return true
     }
     
     private func refreshLocal() async {
@@ -441,6 +458,8 @@ final class AppState: ObservableObject {
         if selectedModelId == nil || remoteModels.contains(where: { $0.id == selectedModelId }) == false {
             selectedModelId = remoteModels.first?.id
         }
+
+        restoreDisplayedGroupOverrideIfPossible()
     }
     
     func login() async -> Bool {
@@ -630,6 +649,19 @@ final class AppState: ObservableObject {
             UserDefaults.standard.removeObject(forKey: PreferenceKey.selectedModelId)
         }
         isStale = snapshot.isStale
+
+        restoreDisplayedGroupOverrideIfPossible()
+    }
+
+    private func restoreDisplayedGroupOverrideIfPossible() {
+        guard let displayedGroupId else {
+            return
+        }
+        guard let group = antigravitySnapshot.groups.first(where: { $0.id == displayedGroupId }) else {
+            iconDisplayOverride = nil
+            return
+        }
+        _ = displayUsageInMenuBar(usedPercentage: group.window.usedPercent, sourceGroupId: displayedGroupId)
     }
 
     private func markStale() {

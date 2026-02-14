@@ -190,7 +190,12 @@ struct MenuDropdown: View {
         }
     }
 
-    private func quotaWindowCard(_ window: ServiceQuotaWindow, actionTitle: String? = nil, action: (() -> Void)? = nil) -> some View {
+    private func quotaWindowCard(
+        _ window: ServiceQuotaWindow,
+        actionTitle: String? = nil,
+        actionEnabled: Bool = true,
+        action: (() -> Void)? = nil
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(window.title)
@@ -200,8 +205,10 @@ struct MenuDropdown: View {
 
                 if let actionTitle, let action {
                     Button(actionTitle, action: action)
-                        .buttonStyle(.borderedProminent)
+                        .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .disabled(actionEnabled == false)
+                        .opacity(actionEnabled ? 1 : 0.6)
                 }
 
                 if let resetText = window.resetText {
@@ -233,8 +240,10 @@ struct MenuDropdown: View {
     }
 
     private func quotaGroupCard(_ group: ServiceUsageGroup) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            quotaWindowCard(group.window, actionTitle: L10n.Menu.show) {
+        let isShowing = appState.isMenuBarShowingGroup(group)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            quotaWindowCard(group.window, actionTitle: L10n.Menu.show, actionEnabled: isShowing == false) {
                 appState.displayGroupUsageInMenuBar(group)
             }
 
