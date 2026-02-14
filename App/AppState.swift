@@ -405,7 +405,10 @@ final class AppState: ObservableObject {
     }
 
     func isMenuBarShowingGroup(_ group: ServiceUsageGroup) -> Bool {
-        iconDisplayOverride?.sourceGroupId == group.id
+        if let sourceGroupId = iconDisplayOverride?.sourceGroupId {
+            return sourceGroupId == group.id
+        }
+        return displayedGroupId == group.id
     }
 
     private func displayUsageInMenuBar(usedPercentage: Int?, sourceGroupId: String?) -> Bool {
@@ -739,7 +742,7 @@ final class AppState: ObservableObject {
                 id: "antigravity-group-\(groupName.lowercased())",
                 title: groupName,
                 usedPercent: averageUsed,
-                detail: "\(groupModels.count) models",
+                detail: nil,
                 resetText: earliestReset.map { Self.relativeResetText(from: $0) }
             )
 

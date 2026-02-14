@@ -9,21 +9,19 @@ struct MenuDropdown: View {
         VStack(spacing: 12) {
             serviceTabs
 
+            snapshotHeader
+
             Divider()
 
             ScrollView {
                 VStack(spacing: 12) {
-                    snapshotHeader
                     snapshotMeta
-
-                    if appState.selectedServiceTab == .antigravity {
-                        antigravitySourceSwitch
-                    }
 
                     snapshotBody(appState.selectedServiceSnapshot)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .scrollIndicators(.hidden)
 
             Divider()
 
@@ -94,9 +92,11 @@ struct MenuDropdown: View {
     }
 
     private var snapshotHeader: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(title(for: appState.selectedServiceTab))
-                .font(.system(size: 22, weight: .medium, design: .rounded))
+        HStack {
+            if appState.selectedServiceTab == .antigravity {
+                sourceChip(title: L10n.Antigravity.localMode, mode: .local)
+                sourceChip(title: L10n.Antigravity.remoteMode, mode: .remote)
+            }
 
             Spacer()
 
@@ -109,14 +109,6 @@ struct MenuDropdown: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        }
-    }
-
-    private var antigravitySourceSwitch: some View {
-        HStack(spacing: 8) {
-            sourceChip(title: L10n.Antigravity.localMode, mode: .local)
-            sourceChip(title: L10n.Antigravity.remoteMode, mode: .remote)
-            Spacer()
         }
     }
 
@@ -204,11 +196,19 @@ struct MenuDropdown: View {
                 Spacer()
 
                 if let actionTitle, let action {
-                    Button(actionTitle, action: action)
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(actionEnabled == false)
-                        .opacity(actionEnabled ? 1 : 0.6)
+                    Button(action: action) {
+                        Text(actionTitle)
+                            .font(.caption.weight(.semibold))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .foregroundStyle(actionEnabled ? Color.white : Color.secondary)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(actionEnabled ? Color.accentColor : Color.gray.opacity(0.35))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(actionEnabled == false)
                 }
 
                 if let resetText = window.resetText {
@@ -220,9 +220,12 @@ struct MenuDropdown: View {
 
             if let usedPercent = window.usedPercent {
                 UsageProgressBar(usedPercent: usedPercent)
-                Text("\(usedPercent)% used")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(usageColor(for: usedPercent))
+                HStack {
+                    Spacer()
+                    Text("\(usedPercent)% used")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if let detail = window.detail {
@@ -372,8 +375,14 @@ struct MenuDropdown: View {
     }
 
     private func usageColor(for usedPercent: Int) -> Color {
-        _ = usedPercent
-        return .secondary
+        let remaining = 100 - usedPercent
+        if remaining >= 70 {
+            return .green
+        } else if remaining >= 30 {
+            return .yellow
+        } else {
+            return .red
+        }
     }
 
     private func relativeUpdatedText(from date: Date) -> String {
@@ -396,15 +405,15 @@ private struct UsageProgressBar: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let width = max(0, proxy.size.width * CGFloat(clampedPercent) / 100)
+            let remainingWidth = max(0, proxy.size.width * CGFloat(100 - clampedPercent) / 100)
 
             ZStack(alignment: .leading) {
                 Capsule(style: .continuous)
-                    .fill(Color.green.opacity(0.65))
+                    .fill(Color.gray.opacity(0.3))
 
                 Capsule(style: .continuous)
-                    .fill(Color.primary.opacity(0.3))
-                    .frame(width: width)
+                    .fill(remainingColor.opacity(0.65))
+                    .frame(width: remainingWidth)
             }
         }
         .frame(height: 10)
@@ -412,6 +421,17 @@ private struct UsageProgressBar: View {
 
     private var clampedPercent: Int {
         min(100, max(0, usedPercent))
+    }
+
+    private var remainingColor: Color {
+        let remaining = 100 - clampedPercent
+        if remaining >= 70 {
+            return .green
+        } else if remaining >= 30 {
+            return .yellow
+        } else {
+            return .red
+        }
     }
 
 }

@@ -38,11 +38,16 @@ struct MenuBarIcon: View {
         guard let percentage else {
             return .gray
         }
-        _ = percentage
         if isMonochrome {
             return .gray
         }
-        return .green
+        if percentage >= 70 {
+            return .green
+        } else if percentage >= 30 {
+            return .yellow
+        } else {
+            return .red
+        }
     }
 }
 
